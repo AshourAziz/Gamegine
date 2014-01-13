@@ -12,7 +12,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Maven: org.bukkit:bukkit:1.7.2-R0.3-SNAPSHOT" level="project" />
-    <orderEntry type="module" module-name="StBukkitLib3" />
+    <orderEntry type="module" module-name="StBukkitLib" />
   </component>
 </module>
 
