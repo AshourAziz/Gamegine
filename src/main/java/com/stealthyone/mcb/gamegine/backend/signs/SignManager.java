@@ -4,11 +4,14 @@ import com.stealthyone.mcb.gamegine.Gamegine;
 import com.stealthyone.mcb.gamegine.backend.games.Game;
 import com.stealthyone.mcb.gamegine.config.ConfigBoolean;
 import com.stealthyone.mcb.stbukkitlib.lib.plugin.LogHelper;
+import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,10 +38,6 @@ public class SignManager {
         //Whether or not the sign part of the plugin is enabled
         enabled = ConfigBoolean.SIGNS_ENABLED.get();
         log.log(Level.INFO, "Game signs " + (enabled ? "enabled" : "DISABLED") + ".");
-
-        if (enabled) {
-
-        }
     }
 
     public boolean registerSignType(Class<? extends GgSign> clazz) {
@@ -78,8 +77,22 @@ public class SignManager {
     public void reindexSigns() {
         signIndex.clear();
         for (GgSignFile file : gameSignFiles.values()) {
-
+            for (Entry<String, Location> entry : file.getAllLocations().entrySet()) {
+                Location loc = entry.getValue();
+                signIndex.put(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ(), file.getOwner().getUniqueId() + ":" + entry.getKey());
+            }
         }
+    }
+
+    public GgSign getSign(Location location) {
+        Validate.notNull(location, "Location cannot be null");
+
+        String rawId = signIndex.get(location.getWorld().getName() + "," + location.getBlockX() + "," + location.getBlockX() + "," + location.getBlockZ());
+        if (rawId == null) {
+            return null;
+        }
+        String[] split = rawId.split("$");
+        return gameSignFiles.get(split[0]).getSign(split[1]);
     }
 
 }

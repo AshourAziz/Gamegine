@@ -28,6 +28,10 @@ public class GgSignFile extends YamlFileManager {
         this.owner = owner;
     }
 
+    public Game getOwner() {
+        return owner;
+    }
+
     public int reloadSigns() {
         loadedSigns.clear();
         reloadConfig();
@@ -71,8 +75,16 @@ public class GgSignFile extends YamlFileManager {
         return loadedSigns.size();
     }
 
+    public GgSign getSign(String signId) {
+        return loadedSigns.get(signId);
+    }
+
     public Location getLocation(GgSign sign) {
         return signLocations.get(sign.getId());
+    }
+
+    public Map<String, Location> getAllLocations() {
+        return signLocations;
     }
 
 }
