@@ -1,0 +1,8 @@
+Debug: true
+Autosave interval: 10
+Players:
+  Files:
+    Inactive check: 600
+    Inactive time: 300
+Signs:
+  Enabled: true

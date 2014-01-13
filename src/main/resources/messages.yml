@@ -1,0 +1,12 @@
+gamestates:
+  disabled: '&4DISABLED'
+  waiting: '&aWAITING'
+  starting: '&eSTARTING'
+  in_progress: '&cIN PROGRESS'
+  ending: '&eENDING'
+  resetting: '&4RESETTING'
+errors:
+  must_be_player: '&cYou must be a player to do this.'
+  no_permission: '&cYou do not have permission to do this.'
+  unknown_command: '&cUnknown command.'
+  unknown_player: '&cUnknown player ''&4%s&c''.'
