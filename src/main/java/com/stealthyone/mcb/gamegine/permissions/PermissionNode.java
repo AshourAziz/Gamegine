@@ -5,7 +5,8 @@ import org.bukkit.command.CommandSender;
 public enum PermissionNode {
 
     POINTS_CHECK,
-    POINTS_CHECK_OTHER;
+    POINTS_CHECK_OTHER,
+    SELECTIONS_CREATE;
 
     private String permission;
 

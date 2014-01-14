@@ -4,6 +4,7 @@ import com.stealthyone.mcb.gamegine.Gamegine;
 
 public enum ConfigBoolean {
 
+    SELECTIONS_USE_WORLDEDIT("Selections.Use WorldEdit"),
     SIGNS_ENABLED("Signs.Enabled");
 
     private String path;
