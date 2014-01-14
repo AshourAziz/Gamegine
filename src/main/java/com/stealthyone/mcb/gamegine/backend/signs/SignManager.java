@@ -2,11 +2,12 @@ package com.stealthyone.mcb.gamegine.backend.signs;
 
 import com.stealthyone.mcb.gamegine.Gamegine;
 import com.stealthyone.mcb.gamegine.backend.games.Game;
-import com.stealthyone.mcb.gamegine.config.ConfigBoolean;
+import com.stealthyone.mcb.gamegine.config.ConfigHelper;
 import com.stealthyone.mcb.stbukkitlib.lib.plugin.LogHelper;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.io.File;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ public class SignManager {
     private Gamegine plugin;
 
     private boolean enabled;
+    private long signInteractDelay;
 
     private Map<String, GgSignFile> gameSignFiles = new HashMap<>(); //Game ID, sign file
     private Map<String, String> signIndex = new HashMap<>(); //location string, corresponding data location
@@ -36,8 +38,16 @@ public class SignManager {
         log.log(Level.INFO, "-----Gamegine Configuration: Signs-----");
 
         //Whether or not the sign part of the plugin is enabled
-        enabled = ConfigBoolean.SIGNS_ENABLED.get();
-        log.log(Level.INFO, "Game signs " + (enabled ? "enabled" : "DISABLED") + ".");
+        enabled = ConfigHelper.SIGNS_ENABLED.get();
+        log.log(Level.INFO, "Game signs " + (enabled ? "ENABLED" : "DISABLED") + ".");
+        if (enabled) {
+            signInteractDelay = ConfigHelper.SIGNS_INTERACT_DELAY.get();
+            log.log(Level.INFO, "Limiting sign interactions to 1 time every " + signInteractDelay + " ticks.");
+        }
+    }
+
+    public long getSignInteractDelay() {
+        return signInteractDelay;
     }
 
     public boolean registerSignType(Class<? extends GgSign> clazz) {
@@ -93,6 +103,10 @@ public class SignManager {
         }
         String[] split = rawId.split("$");
         return gameSignFiles.get(split[0]).getSign(split[1]);
+    }
+
+    public void playerSignInteract(PlayerInteractEvent e) {
+
     }
 
 }

@@ -1,11 +1,13 @@
 package com.stealthyone.mcb.gamegine;
 
+import com.stealthyone.mcb.gamegine.backend.cooldowns.CooldownManager;
 import com.stealthyone.mcb.gamegine.backend.games.GameManager;
 import com.stealthyone.mcb.gamegine.backend.players.PlayerManager;
 import com.stealthyone.mcb.gamegine.backend.selections.SelectionManager;
 import com.stealthyone.mcb.gamegine.backend.signs.SignManager;
 import com.stealthyone.mcb.gamegine.commands.CmdGamegine;
 import com.stealthyone.mcb.gamegine.commands.CmdPoints;
+import com.stealthyone.mcb.gamegine.listeners.PlayerListener;
 import com.stealthyone.mcb.stbukkitlib.StBukkitLib;
 import com.stealthyone.mcb.stbukkitlib.lib.messages.MessageManager;
 import com.stealthyone.mcb.stbukkitlib.lib.plugin.LogHelper;
@@ -26,6 +28,7 @@ public class Gamegine extends JavaPlugin {
 
     private MessageManager messageManager;
 
+    private CooldownManager cooldownManager;
     private GameManager gameManager;
     private PlayerManager playerManager;
     private SelectionManager selectionManager;
@@ -52,10 +55,12 @@ public class Gamegine extends JavaPlugin {
             messageManager = new MessageManager(this);
             gameManager = new GameManager(this);
             playerManager = new PlayerManager(this);
+            cooldownManager = new CooldownManager(this);
             selectionManager = new SelectionManager(this);
             signManager = new SignManager(this);
 
             //listeners
+            Bukkit.getPluginManager().registerEvents(new PlayerListener(this), this);
 
             //commands
             getCommand("gamegine").setExecutor(new CmdGamegine(this));
@@ -84,8 +89,22 @@ public class Gamegine extends JavaPlugin {
         playerManager.save();
     }
 
+    public void reloadAll() {
+        reloadConfig();
+        messageManager.reloadMessages();
+        //gameManager
+        //playerManager
+        cooldownManager.reload();
+        //selectionManager
+        //signManager
+    }
+
     public MessageManager getMessageManager() {
         return messageManager;
+    }
+
+    public CooldownManager getCooldownManager() {
+        return cooldownManager;
     }
 
     public GameManager getGameManager() {
