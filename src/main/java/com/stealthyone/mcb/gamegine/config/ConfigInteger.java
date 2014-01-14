@@ -2,19 +2,16 @@ package com.stealthyone.mcb.gamegine.config;
 
 import com.stealthyone.mcb.gamegine.Gamegine;
 
-public enum ConfigInteger {
-
-    PLAYERS_FILES_INACTIVE_CHECK("Players.Files.Inactive check"),
-    PLAYERS_FILES_INACTIVE_TIME("Players.Files.Inactive time");
+public class ConfigInteger {
 
     private String path;
     private int defValue;
 
-    private ConfigInteger(String path) {
+    ConfigInteger(String path) {
         this(path, 0);
     }
 
-    private ConfigInteger(String path, int defValue) {
+    public ConfigInteger(String path, int defValue) {
         this.path = path;
         this.defValue = defValue;
     }

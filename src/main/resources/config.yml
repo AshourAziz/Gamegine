@@ -1,5 +1,8 @@
 Debug: true
 Autosave interval: 10
+Cooldowns:
+  Enabled: true
+  Decrement frequency: 5
 Players:
   Files:
     Inactive check: 600
@@ -9,3 +12,4 @@ Selections:
   Wand item: RECORD_9:0
 Signs:
   Enabled: true
+  Interact delay: 5

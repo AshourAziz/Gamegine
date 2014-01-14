@@ -2,18 +2,16 @@ package com.stealthyone.mcb.gamegine.config;
 
 import com.stealthyone.mcb.gamegine.Gamegine;
 
-public enum ConfigString {
-
-    SELECTIONS_WAND("Selections.Wand item");
+public class ConfigString {
 
     private String path;
     private String defValue;
 
-    private ConfigString(String path) {
+    ConfigString(String path) {
         this(path, null);
     }
 
-    private ConfigString(String path, String defValue) {
+    public ConfigString(String path, String defValue) {
         this.path = path;
         this.defValue = defValue;
     }

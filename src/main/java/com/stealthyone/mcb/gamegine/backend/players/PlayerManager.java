@@ -1,7 +1,7 @@
 package com.stealthyone.mcb.gamegine.backend.players;
 
 import com.stealthyone.mcb.gamegine.Gamegine;
-import com.stealthyone.mcb.gamegine.config.ConfigInteger;
+import com.stealthyone.mcb.gamegine.config.ConfigHelper;
 import com.stealthyone.mcb.stbukkitlib.lib.plugin.LogHelper;
 import com.stealthyone.mcb.stbukkitlib.lib.storage.YamlFileManager;
 import com.stealthyone.mcb.stbukkitlib.lib.utils.TimeUtils;
@@ -41,7 +41,7 @@ public class PlayerManager {
         log.log(Level.INFO, "-----Gamegine Configuration: Players-----");
 
         //How often to check for inactive files
-        int inactiveCheck = ConfigInteger.PLAYERS_FILES_INACTIVE_CHECK.get();
+        int inactiveCheck = ConfigHelper.PLAYERS_FILES_INACTIVE_CHECK.get();
         log.log(Level.INFO, "Checking for inactive files " + (inactiveCheck <= 0 ? "disabled." : "after " + TimeUtils.translateSeconds(inactiveCheck) + "."));
         if (inactiveCheck > 0) {
             Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
@@ -53,7 +53,7 @@ public class PlayerManager {
         }
 
         //How long a file should be inactive in order for it to be unloaded
-        int inactiveTime = inactiveCheck <= 0 ? 0 : ConfigInteger.PLAYERS_FILES_INACTIVE_TIME.get();
+        int inactiveTime = inactiveCheck <= 0 ? 0 : ConfigHelper.PLAYERS_FILES_INACTIVE_TIME.get();
         log.log(Level.INFO, "Unloading inactive files " + (inactiveTime <= 0 ? "disabled." : "after " + TimeUtils.translateSeconds(inactiveTime) + " of no use."));
     }
 
@@ -80,7 +80,7 @@ public class PlayerManager {
     }
 
     public void purgeInactiveFiles() {
-        int inactiveTime = ConfigInteger.PLAYERS_FILES_INACTIVE_TIME.get();
+        int inactiveTime = ConfigHelper.PLAYERS_FILES_INACTIVE_TIME.get();
         if (inactiveTime <= 0) {
             return;
         }
