@@ -1,4 +1,4 @@
-package com.stealthyone.mcb.gamegine.backend.selection;
+package com.stealthyone.mcb.gamegine.backend.selections;
 
 import java.io.Serializable;
 

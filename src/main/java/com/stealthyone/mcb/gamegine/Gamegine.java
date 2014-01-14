@@ -2,6 +2,7 @@ package com.stealthyone.mcb.gamegine;
 
 import com.stealthyone.mcb.gamegine.backend.games.GameManager;
 import com.stealthyone.mcb.gamegine.backend.players.PlayerManager;
+import com.stealthyone.mcb.gamegine.backend.selections.SelectionManager;
 import com.stealthyone.mcb.gamegine.backend.signs.SignManager;
 import com.stealthyone.mcb.gamegine.commands.CmdGamegine;
 import com.stealthyone.mcb.gamegine.commands.CmdPoints;
@@ -27,6 +28,7 @@ public class Gamegine extends JavaPlugin {
 
     private GameManager gameManager;
     private PlayerManager playerManager;
+    private SelectionManager selectionManager;
     private SignManager signManager;
 
     @Override
@@ -50,6 +52,7 @@ public class Gamegine extends JavaPlugin {
             messageManager = new MessageManager(this);
             gameManager = new GameManager(this);
             playerManager = new PlayerManager(this);
+            selectionManager = new SelectionManager(this);
             signManager = new SignManager(this);
 
             //listeners
@@ -91,6 +94,10 @@ public class Gamegine extends JavaPlugin {
 
     public PlayerManager getPlayerManager() {
         return playerManager;
+    }
+
+    public SelectionManager getSelectionManager() {
+        return selectionManager;
     }
 
     public SignManager getSignManager() {
