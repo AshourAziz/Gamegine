@@ -3,7 +3,7 @@ package com.stealthyone.mcb.gamegine.config;
 public class ConfigHelper {
 
     public final static ConfigLong COOLDOWNS_DECREMENT_FREQ = new ConfigLong("Cooldowns.Decrement frequency");
-    public final static ConfigBoolean COOLDOWNS_ENABLED = new ConfigBoolean("Cooldowns.Cooldowns enabled");
+    public final static ConfigBoolean COOLDOWNS_ENABLED = new ConfigBoolean("Cooldowns.Enabled");
 
     public final static ConfigInteger PLAYERS_FILES_INACTIVE_CHECK = new ConfigInteger("Players.Files.Inactive check");
     public final static ConfigInteger PLAYERS_FILES_INACTIVE_TIME = new ConfigInteger("Players.Files.Inactive time");

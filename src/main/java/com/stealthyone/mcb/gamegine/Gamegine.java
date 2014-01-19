@@ -5,6 +5,7 @@ import com.stealthyone.mcb.gamegine.backend.games.GameManager;
 import com.stealthyone.mcb.gamegine.backend.players.PlayerManager;
 import com.stealthyone.mcb.gamegine.backend.selections.SelectionManager;
 import com.stealthyone.mcb.gamegine.backend.signs.SignManager;
+import com.stealthyone.mcb.gamegine.commands.CmdCooldown;
 import com.stealthyone.mcb.gamegine.commands.CmdGamegine;
 import com.stealthyone.mcb.gamegine.commands.CmdPoints;
 import com.stealthyone.mcb.gamegine.listeners.PlayerListener;
@@ -51,6 +52,13 @@ public class Gamegine extends JavaPlugin {
             log.log(Level.INFO, "StBukkitLib v" + StBukkitLib.getInstance().getDescription().getVersion());
             log.log(Level.INFO, "Installed plugins: " + Arrays.toString(Bukkit.getPluginManager().getPlugins()));
 
+            log.log(Level.INFO, "");
+            log.log(Level.INFO, "Loading configuration...");
+            saveDefaultConfig();
+            getConfig().options().copyDefaults(false);
+            saveConfig();
+
+            log.log(Level.INFO, "");
             log.log(Level.INFO, "Instantiating main plugin components...");
             messageManager = new MessageManager(this);
             gameManager = new GameManager(this);
@@ -63,9 +71,11 @@ public class Gamegine extends JavaPlugin {
             Bukkit.getPluginManager().registerEvents(new PlayerListener(this), this);
 
             //commands
+            getCommand("cooldown").setExecutor(new CmdCooldown(this));
             getCommand("gamegine").setExecutor(new CmdGamegine(this));
             getCommand("points").setExecutor(new CmdPoints(this));
 
+            log.log(Level.INFO, "");
             log.log(Level.INFO, "==========Gamegine successfully ENABLED==========");
         } catch (Exception ex) {
             LogHelper.SEVERE(this, "Error encountered while enabling Gamegine:");
@@ -86,6 +96,7 @@ public class Gamegine extends JavaPlugin {
     }
 
     public void saveAll() {
+        cooldownManager.save();
         playerManager.save();
     }
 

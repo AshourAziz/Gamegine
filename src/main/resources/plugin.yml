@@ -7,6 +7,8 @@ author: Stealth2800
 website: http://stealthyone.com/bukkit
 main: com.stealthyone.mcb.gamegine.Gamegine
 commands:
+  cooldown:
+    aliases: [ggc, cooldowns]
   gamegine:
     aliases: [gg, game]
   points:
