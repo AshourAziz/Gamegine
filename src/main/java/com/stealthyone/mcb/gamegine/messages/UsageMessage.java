@@ -5,18 +5,14 @@ import com.stealthyone.mcb.stbukkitlib.lib.messages.MessageReferencer;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
-public enum ErrorMessage implements MessageReferencer {
+public enum UsageMessage implements MessageReferencer {
 
-    COOLDOWNS_SYSTEM_DISABLED,
-    MUST_BE_PLAYER,
-    NO_PERMISSION,
-    UNKNOWN_COMMAND,
-    UNKNOWN_PLAYER;
+    COOLDOWNS_LIST_OTHERS;
 
     private String path;
 
-    private ErrorMessage() {
-        path = "errors." + toString().toLowerCase();
+    private UsageMessage() {
+        this.path = "usageMessages." + toString().toLowerCase();
     }
 
     @Override
@@ -43,5 +39,4 @@ public enum ErrorMessage implements MessageReferencer {
     public void sendTo(CommandSender sender, String... replacements) {
         sender.sendMessage(ChatColor.translateAlternateColorCodes('&', getMessage(replacements)));
     }
-
 }

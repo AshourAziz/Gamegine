@@ -61,7 +61,7 @@ public class CmdPoints implements CommandExecutor {
                 ErrorMessage.MUST_BE_PLAYER.sendTo(sender);
                 return;
             }
-        } else if (!PermissionNode.POINTS_CHECK_OTHER.isAllowed(sender)) {
+        } else if (!PermissionNode.POINTS_CHECK_OTHERS.isAllowed(sender)) {
             ErrorMessage.NO_PERMISSION.sendTo(sender);
             return;
         }
