@@ -1,8 +1,7 @@
 package com.stealthyone.mcb.gamegine.backend.selections;
 
 import com.stealthyone.mcb.gamegine.Gamegine;
-import com.stealthyone.mcb.gamegine.config.ConfigBoolean;
-import com.stealthyone.mcb.gamegine.config.ConfigString;
+import com.stealthyone.mcb.gamegine.config.ConfigHelper;
 import com.stealthyone.mcb.stbukkitlib.lib.utils.MaterialUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -29,21 +28,21 @@ public class SelectionManager {
         /* Check config values */
         log.log(Level.INFO, "");
         log.log(Level.INFO, "-----Gamegine Configuration: Selections-----");
-        if (ConfigBoolean.SELECTIONS_USE_WORLDEDIT.get()) {
+        if (ConfigHelper.SELECTIONS_USE_WORLDEDIT.get()) {
             //Check dependencies
             log.log(Level.INFO, "Using WorldEdit for selection wand.");
         } else {
             log.log(Level.INFO, "Using built-in wand for selections.");
         }
 
-        String rawWand = ConfigString.SELECTIONS_WAND.get();
+        String rawWand = ConfigHelper.SELECTIONS_WAND.get();
         if (rawWand == null) {
-            log.log(Level.INFO, "No wand specified in config, wand disabled.");
+            log.log(Level.INFO, "No wand specified in config, wand DISABLED.");
         } else {
             try {
                 selectionWand = MaterialUtils.rawMaterialToItem(rawWand, 1);
             } catch (IllegalArgumentException ex) {
-                log.log(Level.INFO, "ERROR: Error loading wand type from config. (" + ex.getMessage() + ") Wand disabled.");
+                log.log(Level.INFO, "ERROR: Error loading wand type from config. (" + ex.getMessage() + ") Wand DISABLED.");
             }
         }
     }
