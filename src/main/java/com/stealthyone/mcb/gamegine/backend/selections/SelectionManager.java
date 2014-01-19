@@ -70,7 +70,7 @@ public class SelectionManager {
         if (plFile != null) {
             FileConfiguration plConf = plFile.getConfig();
             if (plConf.isSet("selection")) {
-                selections.put(playerUuid, new Selection(playerUuid, plConf.getConfigurationSection("selection")));
+                selections.put(playerUuid, new Selection(plConf.getConfigurationSection("selection")));
             }
         }
     }
@@ -86,7 +86,7 @@ public class SelectionManager {
     public Selection getPlayerSelection(Player player) {
         String uuid = player.getUniqueId().toString();
         if (!selections.containsKey(uuid)) {
-            selections.put(uuid, new Selection(player));
+            selections.put(uuid, new Selection());
         }
         return selections.get(uuid);
     }

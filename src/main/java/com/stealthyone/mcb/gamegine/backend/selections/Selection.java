@@ -1,25 +1,20 @@
 package com.stealthyone.mcb.gamegine.backend.selections;
 
-import com.stealthyone.mcb.stbukkitlib.api.Stbl;
 import com.stealthyone.mcb.stbukkitlib.lib.utils.LocationUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.Player;
 
 public class Selection {
 
     private Block block1;
     private Block block2;
-    private String playerUuid;
 
-    public Selection(Player player) {
-        this.playerUuid = player.getUniqueId().toString();
+    public Selection() {
+        block1 = null;
+        block2 = null;
     }
 
-    public Selection(String playerUuid, ConfigurationSection config) {
-        this.playerUuid = playerUuid;
-
+    public Selection(ConfigurationSection config) {
         try {
             block1 = LocationUtils.stringToLocation(config.getString("block1")).getBlock();
         } catch (NullPointerException ex) {
@@ -44,14 +39,6 @@ public class Selection {
 
     public Block getBlock2() {
         return block2;
-    }
-
-    public String getPlayerName() {
-        return Stbl.getUuidManager().getName(playerUuid);
-    }
-
-    public Player getPlayer() {
-        return Bukkit.getPlayerExact(getPlayerName());
     }
 
     public void setBlock1(Block block1) {
