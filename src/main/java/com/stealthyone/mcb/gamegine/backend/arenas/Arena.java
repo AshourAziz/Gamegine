@@ -24,15 +24,14 @@ public class Arena {
         this.name = config.getString("name");
         this.pvp = config.getBoolean("pvp");
         this.selection = new Selection(config.getConfigurationSection("selection"));
-        for (String rawLoc : config.getStringList("spawnPoints")) {
-            spawnPoints.add(LocationUtils.stringToLocation(rawLoc));
-        }
+        this.spawnPoints = LocationUtils.stringListToLocationList(config.getStringList("spawnPoints"))
     }
 
     public void save(ConfigurationSection config) {
         config.set("name", name);
         selection.save(config.createSection("selection"));
-
+        config.set("spawnPoints", LocationUtils.locationListToStringList(spawnPoints, false));
+        config.set("pvp", pvp);
     }
 
 	public String getName() {
