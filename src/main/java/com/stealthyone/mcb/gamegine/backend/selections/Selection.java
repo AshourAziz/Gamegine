@@ -1,20 +1,41 @@
 package com.stealthyone.mcb.gamegine.backend.selections;
 
+import com.stealthyone.mcb.stbukkitlib.api.Stbl;
+import com.stealthyone.mcb.stbukkitlib.lib.utils.LocationUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 public class Selection {
 
-    private static final long serialVersionUID = -1655621435227518958L;
     private Block block1;
     private Block block2;
-    private String playerName;
+    private String playerUuid;
 
     public Selection(Player player) {
-        this.playerName = player.getName();
+        this.playerUuid = player.getUniqueId().toString();
+    }
+
+    public Selection(String playerUuid, ConfigurationSection config) {
+        this.playerUuid = playerUuid;
+
+        try {
+            block1 = LocationUtils.stringToLocation(config.getString("block1")).getBlock();
+        } catch (NullPointerException ex) {
+            block1 = null;
+        }
+
+        try {
+            block2 = LocationUtils.stringToLocation(config.getString("block2")).getBlock();
+        } catch (NullPointerException ex) {
+            block2 = null;
+        }
+    }
+
+    public void save(ConfigurationSection config) {
+        config.set("block1", LocationUtils.locationToString(block1.getLocation(), true));
+        config.set("block2", LocationUtils.locationToString(block2.getLocation(), true));
     }
 
     public Block getBlock1() {
@@ -26,11 +47,11 @@ public class Selection {
     }
 
     public String getPlayerName() {
-        return playerName;
+        return Stbl.getUuidManager().getName(playerUuid);
     }
 
     public Player getPlayer() {
-        return Bukkit.getPlayerExact(playerName);
+        return Bukkit.getPlayerExact(getPlayerName());
     }
 
     public void setBlock1(Block block1) {
@@ -47,41 +68,6 @@ public class Selection {
 
     public boolean areBlocksInDifferentWorlds() {
         return !getBlock1().getWorld().getName().equals(getBlock2().getWorld().getName());
-    }
-
-    public static SerializableSelection toSerializableSelection(Selection sel) {
-        String block1 = sel.getBlock1().getLocation().getWorld().getName()
-                + "," + sel.getBlock1().getLocation().getBlockX() + ","
-                + sel.getBlock1().getLocation().getBlockY() + ","
-                + sel.getBlock1().getLocation().getBlockZ();
-        String block2 = sel.getBlock2().getLocation().getWorld().getName()
-                + "," + sel.getBlock2().getLocation().getBlockX() + ","
-                + sel.getBlock2().getLocation().getBlockY() + ","
-                + sel.getBlock2().getLocation().getBlockZ();
-        return new SerializableSelection(block1, block2);
-    }
-
-    public static Block blockFromString(String str) {
-        Block block = null;
-        String[] stringBlock = str.split(",");
-        World world = Bukkit.getWorld(stringBlock[0]);
-        block = world.getBlockAt(Integer.parseInt(stringBlock[1]),
-                Integer.parseInt(stringBlock[2]),
-                Integer.parseInt(stringBlock[3]));
-        return block;
-    }
-
-    public static Location locationFromString(String str) {
-        String[] location = str.split(",");
-        return new Location(Bukkit.getWorld(location[0]),
-                Double.parseDouble(location[1]),
-                Double.parseDouble(location[2]),
-                Double.parseDouble(location[3]));
-    }
-
-    public static String locationToString(Location loc) {
-        return loc.getWorld().getName() + "," + loc.getX() + "," + loc.getY()
-                + "," + loc.getZ();
     }
 
 }

@@ -105,6 +105,7 @@ public class PlayerManager {
             if (rawFile.exists()) {
                 loadedFiles.put(uuid, new GgPlayerFile(rawFile));
                 plugin.getCooldownManager().loadCooldowns(uuid);
+                plugin.getSelectionManager().loadSelection(uuid);
             } else if (createIfNotExists) {
                 LogHelper.DEBUG(plugin, "Unable to find player file for UUID: " + uuid + ", creating now.");
                 loadedFiles.put(uuid, new GgPlayerFile(rawFile));

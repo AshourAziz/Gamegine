@@ -97,6 +97,7 @@ public class Gamegine extends JavaPlugin {
 
     public void saveAll() {
         cooldownManager.save();
+        selectionManager.save();
         playerManager.save();
     }
 

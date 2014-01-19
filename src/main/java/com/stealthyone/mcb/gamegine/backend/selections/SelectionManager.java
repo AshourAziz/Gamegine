@@ -1,14 +1,20 @@
 package com.stealthyone.mcb.gamegine.backend.selections;
 
 import com.stealthyone.mcb.gamegine.Gamegine;
+import com.stealthyone.mcb.gamegine.backend.players.GgPlayerFile;
+import com.stealthyone.mcb.gamegine.backend.players.PlayerManager;
 import com.stealthyone.mcb.gamegine.config.ConfigHelper;
+import com.stealthyone.mcb.stbukkitlib.api.Stbl;
 import com.stealthyone.mcb.stbukkitlib.lib.utils.MaterialUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,7 +24,7 @@ public class SelectionManager {
 
     private ItemStack selectionWand;
 
-    private Map<String, Selection> selections = new HashMap<>(); //Player name, Selection
+    private Map<String, Selection> selections = new HashMap<>(); //Player uuid, Selection
 
     public SelectionManager(Gamegine plugin) {
         this.plugin = plugin;
@@ -47,20 +53,42 @@ public class SelectionManager {
         }
     }
 
+    public void save() {
+        PlayerManager playerManager = plugin.getPlayerManager();
+
+        for (Entry<String, Selection> plSel : selections.entrySet()) {
+            GgPlayerFile plFile = playerManager.getFile(plSel.getKey(), false);
+            if (plFile == null) continue;
+
+            ConfigurationSection selSec = plFile.getConfig().createSection("selection");
+            plSel.getValue().save(selSec);
+        }
+    }
+
+    public void loadSelection(String playerUuid) {
+        GgPlayerFile plFile = plugin.getPlayerManager().getFile(playerUuid, false);
+        if (plFile != null) {
+            FileConfiguration plConf = plFile.getConfig();
+            if (plConf.isSet("selection")) {
+                selections.put(playerUuid, new Selection(playerUuid, plConf.getConfigurationSection("selection")));
+            }
+        }
+    }
+
     public ItemStack getSelectionWand() {
         return selectionWand;
     }
 
     public Selection getPlayerSelection(String playerName) {
-        return selections.get(playerName.toLowerCase());
+        return selections.get(Stbl.getUuidManager().getUuid(playerName));
     }
 
     public Selection getPlayerSelection(Player player) {
-        String playerName = player.getName().toLowerCase();
-        if (!selections.containsKey(playerName)) {
-            selections.put(playerName, new Selection(player));
+        String uuid = player.getUniqueId().toString();
+        if (!selections.containsKey(uuid)) {
+            selections.put(uuid, new Selection(player));
         }
-        return selections.get(playerName);
+        return selections.get(uuid);
     }
 
 }
