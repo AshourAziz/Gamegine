@@ -1,12 +1,15 @@
 package com.stealthyone.mcb.gamegine.backend.signs;
 
 import com.stealthyone.mcb.gamegine.Gamegine;
+import com.stealthyone.mcb.gamegine.backend.cooldowns.SignInteractCooldown;
 import com.stealthyone.mcb.gamegine.backend.games.Game;
 import com.stealthyone.mcb.gamegine.config.ConfigHelper;
 import com.stealthyone.mcb.stbukkitlib.lib.plugin.LogHelper;
+import com.stealthyone.mcb.stbukkitlib.lib.utils.LocationUtils;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.io.File;
@@ -97,7 +100,7 @@ public class SignManager {
     public GgSign getSign(Location location) {
         Validate.notNull(location, "Location cannot be null");
 
-        String rawId = signIndex.get(location.getWorld().getName() + "," + location.getBlockX() + "," + location.getBlockX() + "," + location.getBlockZ());
+        String rawId = signIndex.get(LocationUtils.locationToString(location, true));
         if (rawId == null) {
             return null;
         }
@@ -105,8 +108,20 @@ public class SignManager {
         return gameSignFiles.get(split[0]).getSign(split[1]);
     }
 
-    public void playerSignInteract(PlayerInteractEvent e) {
+    public boolean isSignRegistered(Location location) {
+        return signIndex.containsKey(LocationUtils.locationToString(location, true));
+    }
 
+    public void playerSignInteract(PlayerInteractEvent e) {
+        Block block = e.getClickedBlock();
+        if (isSignRegistered(block.getLocation())) {
+            if (!plugin.getCooldownManager().isCoolingDown(e.getPlayer(), "signInteractDelay")) {
+                plugin.getCooldownManager().registerCooldown(new SignInteractCooldown(e.getPlayer()));
+
+                getSign(block.getLocation()).onPlayerInteract(e);
+                e.setCancelled(true);
+            }
+        }
     }
 
 }

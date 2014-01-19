@@ -17,12 +17,8 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent e) {
         if (e.getClickedBlock() != null && SignUtils.isBlockSign(e.getClickedBlock())) {
-            onPlayerInteract_Sign(e);
+            plugin.getSignManager().playerSignInteract(e);
         }
-    }
-
-    private void onPlayerInteract_Sign(PlayerInteractEvent e) {
-
     }
 
 }
