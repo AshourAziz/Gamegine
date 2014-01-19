@@ -62,6 +62,11 @@ public class Selection {
         this.block2 = block2;
     }
 
+    public void clearSelection() {
+        block1 = null;
+        block2 = null;
+    }
+
     public boolean areBothPointsSet() {
         return !(getBlock1() == null || getBlock2() == null);
     }
