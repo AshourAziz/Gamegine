@@ -9,10 +9,10 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.UUID;
 
 public class GgPlayerFile extends YamlFileManager {
 
+    private String uuid;
     private long lastAccessed;
 
     /* Point-related */
@@ -35,7 +35,9 @@ public class GgPlayerFile extends YamlFileManager {
         FileConfiguration config = getConfig();
         earnedPoints.clear();
 
-        lastAccessed = config.getLong("lastAccessed", 0L);
+        uuid = getFile().getName().replace(".yml", "");
+
+        lastAccessed = System.currentTimeMillis();
 
         availablePoints = config.getDouble("points.availablePoints", 0D);
         totalPoints = config.getDouble("points.totalPoints");
@@ -47,7 +49,6 @@ public class GgPlayerFile extends YamlFileManager {
     @Override
     public void saveFile() {
         FileConfiguration config = getConfig();
-        config.set("lastAccessed", lastAccessed);
 
         config.set("points.availablePoints", availablePoints);
         config.set("points.totalPoints", totalPoints);
@@ -58,8 +59,8 @@ public class GgPlayerFile extends YamlFileManager {
         super.saveFile();
     }
 
-    public UUID getUuid() {
-        return UUID.fromString(getFile().getName().replace(".yml", "")) ;
+    public String getUuid() {
+        return uuid;
     }
 
     public long getLastAccessed() {

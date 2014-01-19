@@ -42,7 +42,7 @@ public class PlayerManager {
 
         //How often to check for inactive files
         int inactiveCheck = ConfigHelper.PLAYERS_FILES_INACTIVE_CHECK.get();
-        log.log(Level.INFO, "Checking for inactive files " + (inactiveCheck <= 0 ? "disabled." : "after " + TimeUtils.translateSeconds(inactiveCheck) + "."));
+        log.log(Level.INFO, "Checking for inactive files " + (inactiveCheck <= 0 ? "DISABLED." : "after " + TimeUtils.translateSeconds(inactiveCheck) + "."));
         if (inactiveCheck > 0) {
             Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
                 @Override
@@ -54,7 +54,7 @@ public class PlayerManager {
 
         //How long a file should be inactive in order for it to be unloaded
         int inactiveTime = inactiveCheck <= 0 ? 0 : ConfigHelper.PLAYERS_FILES_INACTIVE_TIME.get();
-        log.log(Level.INFO, "Unloading inactive files " + (inactiveTime <= 0 ? "disabled." : "after " + TimeUtils.translateSeconds(inactiveTime) + " of no use."));
+        log.log(Level.INFO, "Unloading inactive files " + (inactiveTime <= 0 ? "DISABLED." : "after " + TimeUtils.translateSeconds(inactiveTime) + " of no use."));
     }
 
     public void save() {
@@ -90,8 +90,8 @@ public class PlayerManager {
         for (Entry<String, GgPlayerFile> entry : loadedFiles.entrySet()) {
             GgPlayerFile file = entry.getValue();
             if (curTime - file.getLastAccessed() / 1000 >= inactiveTime) {
-                if (unloadFile(file.getUuid().toString())) {
-                    LogHelper.DEBUG(plugin, "Unloaded inactive file for UUID: " + file.getUuid().toString());
+                if (unloadFile(file.getUuid())) {
+                    LogHelper.DEBUG(plugin, "Unloaded inactive file for UUID: " + file.getUuid());
                     purgeCount++;
                 }
             }
@@ -104,6 +104,7 @@ public class PlayerManager {
             File rawFile = new File(playerDir + File.separator + uuid + ".yml");
             if (rawFile.exists()) {
                 loadedFiles.put(uuid, new GgPlayerFile(rawFile));
+                plugin.getCooldownManager().loadCooldowns(uuid);
             } else if (createIfNotExists) {
                 LogHelper.DEBUG(plugin, "Unable to find player file for UUID: " + uuid + ", creating now.");
                 loadedFiles.put(uuid, new GgPlayerFile(rawFile));
