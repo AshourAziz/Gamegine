@@ -24,7 +24,7 @@ public class Arena {
         this.name = config.getString("name");
         this.pvp = config.getBoolean("pvp");
         this.selection = new Selection(config.getConfigurationSection("selection"));
-        this.spawnPoints = LocationUtils.stringListToLocationList(config.getStringList("spawnPoints"))
+        this.spawnPoints = LocationUtils.stringListToLocationList(config.getStringList("spawnPoints"));
     }
 
     public void save(ConfigurationSection config) {
