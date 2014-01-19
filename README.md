@@ -1,17 +1,17 @@
 Gamegine
 ===
-    Copyright (C) 2014 Stealth2800 <stealth2800@stealthyone.com> <br />
-    Website: <http://stealthyone.com/bukkit> <br />
-    Bukkit Forums: <http://forums.bukkit.org/threads/wip-lib-gamegine-minigame-library.219957/> <br />
-    BukkitDev: <http://dev.bukkit.org/bukkit-plugins/gamegine/> <br />
+Copyright (C) 2014 Stealth2800 <stealth2800@stealthyone.com>
+Website: <http://stealthyone.com/bukkit>
+Bukkit Forums: <http://forums.bukkit.org/threads/wip-lib-gamegine-minigame-library.219957/>
+BukkitDev: <http://dev.bukkit.org/bukkit-plugins/gamegine/>
 
-This API is being created in order to create compatibility among games using it to allow for multiple games to be run on
-a single server without any problems. This will be especially useful for minigame servers wanting to create a smooth
-experience for their players.
+    This API is being created in order to create compatibility among games using it to allow for multiple games to be run on
+    a single server without any problems. This will be especially useful for minigame servers wanting to create a smooth
+    experience for their players.
 
-From past experience, I have found it a pain to install multiple minigame plugins on a single server due to
-incompatibilities that would appear. I'm creating this in the hope that no one will have to deal with those sorts of
-problems in the future.
+    From past experience, I have found it a pain to install multiple minigame plugins on a single server due to
+    incompatibilities that would appear. I'm creating this in the hope that no one will have to deal with those sorts of
+    problems in the future.
 
 ## Using this Library
 
