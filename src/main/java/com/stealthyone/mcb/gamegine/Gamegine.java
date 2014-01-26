@@ -1,5 +1,6 @@
 package com.stealthyone.mcb.gamegine;
 
+import com.stealthyone.mcb.gamegine.backend.arenas.ArenaManager;
 import com.stealthyone.mcb.gamegine.backend.cooldowns.CooldownManager;
 import com.stealthyone.mcb.gamegine.backend.games.GameManager;
 import com.stealthyone.mcb.gamegine.backend.players.PlayerManager;
@@ -29,6 +30,7 @@ public class Gamegine extends JavaPlugin {
 
     private MessageManager messageManager;
 
+    private ArenaManager arenaManager;
     private CooldownManager cooldownManager;
     private GameManager gameManager;
     private PlayerManager playerManager;
@@ -65,6 +67,7 @@ public class Gamegine extends JavaPlugin {
             playerManager = new PlayerManager(this);
             cooldownManager = new CooldownManager(this);
             selectionManager = new SelectionManager(this);
+            arenaManager = new ArenaManager(this);
             signManager = new SignManager(this);
 
             //listeners
@@ -96,9 +99,14 @@ public class Gamegine extends JavaPlugin {
     }
 
     public void saveAll() {
+        /* Player related managers */
         cooldownManager.save();
         selectionManager.save();
         playerManager.save();
+
+        /* Game related managers */
+        arenaManager.save();
+        gameManager.save();
     }
 
     public void reloadAll() {
@@ -113,6 +121,10 @@ public class Gamegine extends JavaPlugin {
 
     public MessageManager getMessageManager() {
         return messageManager;
+    }
+
+    public ArenaManager getArenaManager() {
+        return arenaManager;
     }
 
     public CooldownManager getCooldownManager() {
