@@ -1,14 +1,12 @@
-name: ${project.name}
-version: ${project.version}
+name: Gamegine
+version: 1.0
 description: Bukkit minigame API to enable compatibility running multiple game plugins on a single server
 depend: [StBukkitLib]
 softdepend: [InSigns]
 author: Stealth2800
 website: http://stealthyone.com/bukkit
-main: com.stealthyone.mcb.gameginecore.Gamegine
+main: com.stealthyone.mcb.gamegine.Gamegine
 commands:
-  cooldown:
-    aliases: [ggc, cooldowns]
   gamegine:
     aliases: [gg, game]
   points:

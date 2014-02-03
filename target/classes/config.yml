@@ -1,0 +1,15 @@
+Debug: true
+Autosave interval: 10
+Cooldowns:
+  Enabled: true
+  Decrement frequency: 5
+Players:
+  Files:
+    Inactive check: 600
+    Inactive time: 300
+Selections:
+  Use WorldEdit: false
+  Wand item: RECORD_9:0
+Signs:
+  Enabled: true
+  Interact delay: 5

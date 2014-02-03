@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.stealthyone.mcb</groupId>
-    <artifactId>gamegine</artifactId>
+    <artifactId>gameginecore</artifactId>
     <version>1.0</version>
-    <name>Gamegine</name>
+    <name>GamegineCore</name>
     <url>http://stealthyone.com/bukkit</url>
 
     <repositories>
@@ -31,14 +31,28 @@
             <artifactId>stbukkitlib</artifactId>
             <version>3.0-SNAPSHOT</version>
             <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bukkit</groupId>
+                    <artifactId>craftbukkit</artifactId>
+                </exclusion>
+            </exclusions>
+            <type>jar</type>
+        </dependency>
+
+        <dependency>
+            <groupId>com.stealthyone.mcb</groupId>
+            <artifactId>gamegine</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
             <type>jar</type>
         </dependency>
     </dependencies>
 
     <scm>
-        <connection>scm:git:git@github.com:Stealth2800/Gamegine.git</connection>
-        <url>scm:git:git@github.com:Stealth2800/Gamegine.git</url>
-        <developerConnection>scm:git:git@github.com:Stealth2800/Gamegine.git</developerConnection>
+        <connection>scm:git:git@github.com:Gamegine/GamegineCore.git</connection>
+        <url>scm:git:git@github.com:Gamegine/GamegineCore.git</url>
+        <developerConnection>scm:git:git@github.com:Gamegine/GamegineCore.git</developerConnection>
     </scm>
 
     <build>
