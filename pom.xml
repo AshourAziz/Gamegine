@@ -5,15 +5,47 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.stealthyone.mcb</groupId>
-    <artifactId>gameginecore</artifactId>
+    <artifactId>gamegine</artifactId>
     <version>1.0</version>
-    <name>GamegineCore</name>
+    <name>Gamegine</name>
     <url>http://stealthyone.com/bukkit</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <ciManagement>
+        <system>jenkins</system>
+        <url>http://ci.stealthyone.com</url>
+    </ciManagement>
+
+    <scm>
+        <connection>scm:git:git://github.com/gamegine/GamegineAPI.git</connection>
+        <developerConnection>scm:git:git@github.com:Stealth2800/SimpleSlap.git</developerConnection>
+        <url>https://github.com/Gamegine/GamegineAPI</url>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>stealthyone-releases</id>
+            <url>http://repo.stealthyone.com/releases</url>
+        </repository>
+
+        <snapshotRepository>
+            <id>stealthyone-snapshots</id>
+            <url>http://repo.stealthyone.com/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <repositories>
         <repository>
             <id>bukkit-repo</id>
             <url>http://repo.bukkit.org/content/groups/public</url>
+        </repository>
+
+        <repository>
+            <id>stealthyone-repo</id>
+            <url>http://repo.stealthyone.com/content</url>
         </repository>
     </repositories>
 
@@ -28,32 +60,20 @@
 
         <dependency>
             <groupId>com.stealthyone.mcb</groupId>
-            <artifactId>stbukkitlib</artifactId>
-            <version>3.0-SNAPSHOT</version>
+            <artifactId>gamegineapi</artifactId>
+            <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.bukkit</groupId>
-                    <artifactId>craftbukkit</artifactId>
-                </exclusion>
-            </exclusions>
             <type>jar</type>
         </dependency>
 
         <dependency>
             <groupId>com.stealthyone.mcb</groupId>
-            <artifactId>gamegine</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <artifactId>stbukkitlib</artifactId>
+            <version>3.0-SNAPSHOT</version>
             <scope>compile</scope>
             <type>jar</type>
         </dependency>
     </dependencies>
-
-    <scm>
-        <connection>scm:git:git@github.com:Gamegine/GamegineCore.git</connection>
-        <url>scm:git:git@github.com:Gamegine/GamegineCore.git</url>
-        <developerConnection>scm:git:git@github.com:Gamegine/GamegineCore.git</developerConnection>
-    </scm>
 
     <build>
         <resources>
@@ -69,7 +89,7 @@
             </resource>
         </resources>
         <defaultGoal>clean install</defaultGoal>
-        <finalName>${project.artifactId} v${project.version}-b${buildNumber}</finalName>
+        <finalName>${project.artifactId} v${project.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -80,6 +100,7 @@
                     <target>1.7</target>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -89,29 +110,7 @@
                         <manifest>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
-                        <manifestEntries>
-                            <Implementation-Build>${buildNumber}</Implementation-Build>
-                        </manifestEntries>
                     </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>buildnumber-maven-plugin</artifactId>
-                <version>1.2</version>
-                <executions>
-                    <execution>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>create</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <format>{0,date,yyyyMMdd-HHmmss}</format>
-                    <items>
-                        <item>timestamp</item>
-                    </items>
                 </configuration>
             </plugin>
         </plugins>
