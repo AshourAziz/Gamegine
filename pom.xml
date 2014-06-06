@@ -118,6 +118,7 @@
 
                         <configuration>
                             <minimizeJar>false</minimizeJar>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
                             <relocations>
                                 <relocation>
                                     <pattern>com.stealthyone.mcb.stbukkitlib</pattern>
