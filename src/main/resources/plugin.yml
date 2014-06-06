@@ -1,15 +1,17 @@
 name: ${project.name}
 version: ${project.version}
-description: Bukkit minigame API to enable compatibility running multiple game plugins on a single server
-depend: [StBukkitLib]
+description: 'API for creating compatibility among different game plugins and tool for creating games easily and quickly'
+depend: []
 softdepend: [InSigns, WorldEdit]
 author: Stealth2800
-website: http://stealthyone.com/bukkit
-main: com.stealthyone.mcb.gamegine.GamegineCorePlugin
+website: http://stealthyone.com
+main: com.stealthyone.mcb.gamegine.GameginePlugin
 commands:
   cooldown:
     aliases: [ggc, cooldowns]
   gamegine:
-    aliases: [gg, game]
+    aliases: [gg]
+  games;
+    aliases: []
   points:
     aliases: [ggpoints, gamepoints]

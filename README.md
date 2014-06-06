@@ -1,11 +1,12 @@
-GamegineCore
+Gamegine
 ===
 Copyright (C) 2014 Stealth2800 <stealth2800@stealthyone.com> <br />
 Website: <http://stealthyone.com/bukkit> <br />
 Bukkit Forums: <http://forums.bukkit.org/threads/wip-lib-gamegine-minigame-library.219957/> <br />
 BukkitDev: <http://dev.bukkit.org/bukkit-plugins/gamegine/> <br />
 
-    This is the 'official' implementation of the Gamegine minigame library for Bukkit.
+    This is the plugin form of Gamegine that is run on servers. If you are a developer, you will most likely be fine
+    using the GamegineAPI alone.
 
 ## License
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
