@@ -42,4 +42,8 @@ public class GgGameManager implements GameManager {
         return registeredGames.values();
     }
 
+    public boolean isGameRegistered(Game game) {
+        return registeredGames.get(game.getClass().getCanonicalName()) != null;
+    }
+
 }

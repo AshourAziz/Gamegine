@@ -14,5 +14,15 @@ errors:
 notices:
   cooldown_ended: '&aCooldown ''&6%s&a'' has ended.'
   cooldowns_player_has_none: '&c&oNo cooldowns.'
+  plugin_reloaded: '{TAG}&9Plugin configuration &creloaded &9from the disk.'
+  plugin_saved: '{TAG}&9Plugin data and configuration &asaved &9to the disk.'
 usageMessages:
   cooldowns_list_others: '&4USAGE: &c/%s list <player>'
+plugin:
+  cmd_games_list:
+  - '&8=====&aRegistered Games &6(pg.{PAGE}/{MAXPAGES})&8====='
+  - '{GAMELIST}'
+  - '{PAGENOTICE}'
+  cmd_games_list_item: '&e{NUM}) &a{NAME} &9by {AUTHORS} &8(v{VERSION})'
+  cmd_games_list_none: '&c&lNo registered games.'
+  page_notice: '&cType &4/{LABEL}{COMMAND}{NEXTPAGE} &cto view the next page.'

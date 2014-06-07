@@ -6,6 +6,7 @@ import com.stealthyone.mcb.gamegine.commands.CmdGamegine;
 import com.stealthyone.mcb.gamegine.commands.CmdGames;
 import com.stealthyone.mcb.gamegine.games.GgGameManager;
 import com.stealthyone.mcb.gamegine.players.GgPlayerManager;
+import com.stealthyone.mcb.stbukkitlib.messages.MessageManager;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -15,7 +16,10 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
     private boolean isDebug;
     private int autosaveInterval;
 
-    /* Managers */
+    /* Misc Plugin Managers */
+    private MessageManager messageManager;
+
+    /* Gamegine Managers */
     private GgGameManager gameManager;
     private GgPlayerManager playerManager;
 
@@ -26,7 +30,16 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
 
     @Override
     public void onEnable() {
-        GamegineLogger.debug("Creating managers...");
+        GamegineLogger.debug("Checking default config.yml...");
+        saveDefaultConfig();
+        getConfig().options().copyDefaults(false);
+        saveConfig();
+
+        GamegineLogger.debug("Setting up plugin managers...");
+        messageManager = new MessageManager(this);
+        messageManager.reloadMessages();
+
+        GamegineLogger.debug("Creating Gamegine managers...");
         gameManager = new GgGameManager(this);
         playerManager = new GgPlayerManager(this);
 
@@ -65,6 +78,10 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
     @Override
     public GgGameManager getGameManager() {
         return gameManager;
+    }
+
+    public MessageManager getMessageManager() {
+        return messageManager;
     }
 
     @Override

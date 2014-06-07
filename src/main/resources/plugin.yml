@@ -11,7 +11,7 @@ commands:
     aliases: [ggc, cooldowns]
   gamegine:
     aliases: [gg]
-  games;
+  games:
     aliases: []
   points:
     aliases: [ggpoints, gamepoints]
