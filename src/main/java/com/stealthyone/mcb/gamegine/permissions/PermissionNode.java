@@ -5,7 +5,9 @@ import org.bukkit.command.CommandSender;
 
 public enum PermissionNode {
 
-    GAMES_LIST;
+    GAMES_LIST,
+    RELOAD,
+    SAVE;
 
     private String permission;
 

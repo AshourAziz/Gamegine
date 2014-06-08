@@ -2,7 +2,9 @@ package com.stealthyone.mcb.gamegine.commands;
 
 import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.games.Game;
+import com.stealthyone.mcb.gamegine.messages.Messages.ErrorMessages;
 import com.stealthyone.mcb.gamegine.messages.Messages.PluginMessages;
+import com.stealthyone.mcb.gamegine.messages.Messages.UsageMessages;
 import com.stealthyone.mcb.gamegine.permissions.PermissionNode;
 import com.stealthyone.mcb.stbukkitlib.utils.MessageUtils;
 import com.stealthyone.mcb.stbukkitlib.utils.MiscUtils;
@@ -26,12 +28,22 @@ public class CmdGames implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length > 0) {
             switch (args[0].toLowerCase()) {
+                /* Show help for 'games' command */
+                case "help":
+                    plugin.getHelpManager().handleHelpCommand("games", sender, label, "help", args);
+                    return true;
+
                 /* List registered games */
                 case "list":
                     cmdList(sender, label, args);
                     return true;
+
+                default:
+                    ErrorMessages.UNKNOWN_COMMAND.sendTo(sender);
+                    break;
             }
         }
+        UsageMessages.GAMES_HELP.sendTo(sender, new QuickMap<>("{LABEL}", label).build());
         return true;
     }
 

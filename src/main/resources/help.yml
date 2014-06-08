@@ -1,0 +1,10 @@
+messages:
+- '&c/{LABEL} version &8- &eShow plugin version'
+- '&c/{LABEL} reload &8- &eReload plugin configuration'
+- '&c/{LABEL} save &8- &eSave plugin data'
+children:
+  Games:
+    options:
+      description: 'Help about the ''games'' command'
+    messages:
+    - '&c/{LABEL} list &8- &eList all registered games'
