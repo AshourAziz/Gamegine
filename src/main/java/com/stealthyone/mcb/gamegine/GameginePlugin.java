@@ -1,5 +1,6 @@
 package com.stealthyone.mcb.gamegine;
 
+import com.stealthyone.mcb.gamegine.api.Gamegine;
 import com.stealthyone.mcb.gamegine.api.GamegineAPI;
 import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
 import com.stealthyone.mcb.gamegine.commands.CmdGamegine;
@@ -25,6 +26,7 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
 
     @Override
     public void onLoad() {
+        Gamegine.setInstance(this);
         getDataFolder().mkdir();
     }
 
