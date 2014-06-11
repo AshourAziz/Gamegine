@@ -22,7 +22,7 @@ public class GgPlayerManager implements PlayerManager {
     @Override
     public boolean setPlayerGame(Player player, Game game) {
         if (game != null && !plugin.getGameManager().isGameRegistered(game)) {
-            throw new IllegalArgumentException("Cannot set player's current game to '" + game.getClass().getCanonicalName() + "' -> game isn't registered!");
+            throw new IllegalArgumentException("Cannot set player's current game to '" + game.getClass().getCanonicalName() + "' - game isn't registered!");
         }
 
         if (isPlayerInGame(player)) {
