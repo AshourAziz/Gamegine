@@ -6,9 +6,12 @@ import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
 import com.stealthyone.mcb.gamegine.commands.CmdGamegine;
 import com.stealthyone.mcb.gamegine.commands.CmdGames;
 import com.stealthyone.mcb.gamegine.games.GgGameManager;
+import com.stealthyone.mcb.gamegine.listeners.PlayerListener;
 import com.stealthyone.mcb.gamegine.players.GgPlayerManager;
+import com.stealthyone.mcb.gamegine.signs.GgSignManager;
 import com.stealthyone.mcb.stbukkitlib.help.HelpManager;
 import com.stealthyone.mcb.stbukkitlib.messages.MessageManager;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -25,6 +28,7 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
     /* Gamegine Managers */
     private GgGameManager gameManager;
     private GgPlayerManager playerManager;
+    private GgSignManager signManager;
 
     @Override
     public void onLoad() {
@@ -48,6 +52,10 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
         GamegineLogger.debug("Creating Gamegine managers...");
         gameManager = new GgGameManager(this);
         playerManager = new GgPlayerManager(this);
+        signManager = new GgSignManager(this);
+
+        GamegineLogger.debug("Registering events...");
+        Bukkit.getPluginManager().registerEvents(new PlayerListener(this), this);
 
         GamegineLogger.debug("Registering commands...");
         getCommand("gamegine").setExecutor(new CmdGamegine(this));
@@ -102,6 +110,11 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
     @Override
     public GgPlayerManager getPlayerManager() {
         return playerManager;
+    }
+
+    @Override
+    public GgSignManager getSignManager() {
+        return signManager;
     }
 
 }
