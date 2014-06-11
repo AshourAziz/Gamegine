@@ -72,6 +72,11 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
     }
 
     @Override
+    public JavaPlugin getPlugin() {
+        return this;
+    }
+
+    @Override
     public String getVersion() {
         return getDescription().getVersion();
     }
