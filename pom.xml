@@ -20,9 +20,9 @@
     </ciManagement>
 
     <scm>
-        <connection>scm:git:git://github.com/gamegine/GamegineAPI.git</connection>
-        <developerConnection>scm:git:git@github.com:Stealth2800/SimpleSlap.git</developerConnection>
-        <url>https://github.com/Gamegine/GamegineAPI</url>
+        <connection>scm:git:git://github.com/Gamegine/Gamegine.git</connection>
+        <developerConnection>scm:git:git@github.com:Gamegine/Gamegine.git</developerConnection>
+        <url>https://github.com/Gamegine/Gamegine</url>
     </scm>
 
     <distributionManagement>
