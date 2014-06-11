@@ -1,6 +1,6 @@
 name: ${project.name}
 version: ${project.version}
-description: 'API for creating compatibility among different game plugins and tool for creating games easily and quickly'
+description: 'Game library for Bukkit'
 depend: []
 softdepend: [InSigns, WorldEdit]
 author: Stealth2800
