@@ -3,6 +3,7 @@ package com.stealthyone.mcb.gamegine;
 import com.stealthyone.mcb.gamegine.api.Gamegine;
 import com.stealthyone.mcb.gamegine.api.GamegineAPI;
 import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
+import com.stealthyone.mcb.gamegine.backend.arenas.GgArenaManager;
 import com.stealthyone.mcb.gamegine.commands.CmdGamegine;
 import com.stealthyone.mcb.gamegine.commands.CmdGames;
 import com.stealthyone.mcb.gamegine.games.GgGameManager;
@@ -26,6 +27,7 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
     private MessageManager messageManager;
 
     /* Gamegine Managers */
+    private GgArenaManager arenaManager;
     private GgGameManager gameManager;
     private GgPlayerManager playerManager;
     private GgSignManager signManager;
@@ -50,6 +52,7 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
         messageManager.reloadMessages();
 
         GamegineLogger.debug("Creating Gamegine managers...");
+        arenaManager = new GgArenaManager(this);
         gameManager = new GgGameManager(this);
         playerManager = new GgPlayerManager(this);
         signManager = new GgSignManager(this);
@@ -92,6 +95,11 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
     @Override
     public boolean isDebug() {
         return isDebug;
+    }
+
+    @Override
+    public GgArenaManager getArenaManager() {
+        return arenaManager;
     }
 
     @Override
