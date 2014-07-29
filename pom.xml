@@ -6,7 +6,7 @@
 
     <groupId>com.stealthyone.mcb</groupId>
     <artifactId>gamegine</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>Gamegine</name>
     <url>http://stealthyone.com/</url>
 
@@ -47,17 +47,14 @@
             <id>stealthyone-repo</id>
             <url>http://repo.stealthyone.com/content/groups/public</url>
         </repository>
+
+        <repository>
+            <id>sk89q-repo</id>
+            <url>http://maven.sk89q.com/repo/</url>
+        </repository>
     </repositories>
 
     <dependencies>
-        <dependency>
-            <groupId>org.bukkit</groupId>
-            <artifactId>bukkit</artifactId>
-            <version>1.7.9-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-            <type>jar</type>
-        </dependency>
-
         <dependency>
             <groupId>com.stealthyone.mcb</groupId>
             <artifactId>gamegineapi</artifactId>
@@ -67,11 +64,10 @@
         </dependency>
 
         <dependency>
-            <groupId>com.stealthyone.mcb</groupId>
-            <artifactId>stbukkitlib</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
-            <scope>compile</scope>
-            <type>jar</type>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.14.4</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -117,8 +113,9 @@
                         </goals>
 
                         <configuration>
-                            <minimizeJar>false</minimizeJar>
+                            <minimizeJar>true</minimizeJar>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+
                             <relocations>
                                 <relocation>
                                     <pattern>com.stealthyone.mcb.stbukkitlib</pattern>
@@ -128,8 +125,8 @@
 
                             <artifactSet>
                                 <includes>
-                                    <include>com.stealthyone.mcb:stbukkitlib</include>
                                     <include>com.stealthyone.mcb:gamegineapi</include>
+                                    <include>com.stealthyone.mcb:stbukkitlib</include>
                                 </includes>
                             </artifactSet>
                         </configuration>

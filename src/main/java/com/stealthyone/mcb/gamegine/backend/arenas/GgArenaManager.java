@@ -4,20 +4,18 @@ import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.arenas.ArenaManager;
 import com.stealthyone.mcb.gamegine.lib.arenas.Arena;
 import com.stealthyone.mcb.gamegine.lib.arenas.components.RegenableArena;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang.Validate;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@RequiredArgsConstructor
 public class GgArenaManager implements ArenaManager {
 
-    private GameginePlugin plugin;
+    private final GameginePlugin plugin;
 
     private Map<String, RegenableArena> registeredArenas = new HashMap<>();
-
-    public GgArenaManager(GameginePlugin plugin) {
-        this.plugin = plugin;
-    }
 
     private void validateRegenableArena(RegenableArena arena) {
         Validate.notNull(arena, "Arena cannot be null.");

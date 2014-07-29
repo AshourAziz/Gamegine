@@ -9,18 +9,16 @@ import com.stealthyone.mcb.gamegine.messages.Messages.UsageMessages;
 import com.stealthyone.mcb.gamegine.permissions.PermissionNode;
 import com.stealthyone.mcb.stbukkitlib.utils.MessageUtils;
 import com.stealthyone.mcb.stbukkitlib.utils.QuickMap;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
+@RequiredArgsConstructor
 public class CmdGamegine implements CommandExecutor {
 
-    private GameginePlugin plugin;
-
-    public CmdGamegine(GameginePlugin plugin) {
-        this.plugin = plugin;
-    }
+    private final GameginePlugin plugin;
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {

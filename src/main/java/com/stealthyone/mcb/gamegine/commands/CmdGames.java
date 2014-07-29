@@ -10,19 +10,17 @@ import com.stealthyone.mcb.stbukkitlib.utils.MessageUtils;
 import com.stealthyone.mcb.stbukkitlib.utils.MiscUtils;
 import com.stealthyone.mcb.stbukkitlib.utils.QuickMap;
 import com.stealthyone.mcb.stbukkitlib.utils.StringUtils;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
 import java.util.*;
 
+@RequiredArgsConstructor
 public class CmdGames implements CommandExecutor {
 
-    private GameginePlugin plugin;
-
-    public CmdGames(GameginePlugin plugin) {
-        this.plugin = plugin;
-    }
+    private final GameginePlugin plugin;
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {

@@ -2,20 +2,20 @@ package com.stealthyone.mcb.gamegine.listeners;
 
 import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.signs.GameSign;
-import com.stealthyone.mcb.gamegine.api.signs.GamegineSign;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerKickEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
+@RequiredArgsConstructor
 public class PlayerListener implements Listener {
 
-    private GameginePlugin plugin;
-
-    public PlayerListener(GameginePlugin plugin) {
-        this.plugin = plugin;
-    }
+    private final GameginePlugin plugin;
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent e) {
@@ -24,9 +24,23 @@ public class PlayerListener implements Listener {
             return;
         }
         GameSign gameSign = plugin.getSignManager().getSign(block.getLocation());
-        if (gameSign instanceof GamegineSign) {
-            ((GamegineSign) gameSign).playerInteract(e);
+        if (gameSign != null) {
+            gameSign.playerInteract(e);
         }
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent e) {
+        playerLeave(e.getPlayer());
+    }
+
+    @EventHandler
+    public void onPlayerKick(PlayerKickEvent e) {
+        playerLeave(e.getPlayer());
+    }
+
+    private void playerLeave(Player player) {
+        plugin.getPlayerManager().playerDisconnect(player);
     }
 
 }

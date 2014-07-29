@@ -4,43 +4,68 @@ import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.games.Game;
 import com.stealthyone.mcb.gamegine.api.players.GamePlayer;
 import com.stealthyone.mcb.gamegine.api.players.PlayerManager;
+import com.stealthyone.mcb.gamegine.api.players.events.GgPlayerJoinGameEvent;
+import com.stealthyone.mcb.gamegine.api.players.events.GgPlayerLeaveGameEvent;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
+@RequiredArgsConstructor
 public class GgPlayerManager implements PlayerManager {
 
-    private GameginePlugin plugin;
+    private final GameginePlugin plugin;
 
-    private Map<Player, String> playerGames = new HashMap<>();
-
-    public GgPlayerManager(GameginePlugin plugin) {
-        this.plugin = plugin;
-    }
+    private Map<UUID, GgPlayer> loadedPlayers = new HashMap<>();
+    private Map<UUID, String> playerGames = new HashMap<>();
 
     @Override
-    public boolean setPlayerGame(Player player, Game game) {
+    public boolean setPlayerGame(@NonNull Player player, Game game) {
         if (game != null && !plugin.getGameManager().isGameRegistered(game)) {
             throw new IllegalArgumentException("Cannot set player's current game to '" + game.getClass().getCanonicalName() + "' - game isn't registered!");
         }
 
-        if (isPlayerInGame(player)) {
-            return false;
+        UUID uuid = player.getUniqueId();
+
+        if (game != null && isPlayerInGame(player)) return false; // Player is already in a game.
+        if (game == null && !isPlayerInGame(player)) return false; // Player is already not in a game.
+
+        if (game == null) {
+            Bukkit.getPluginManager().callEvent(new GgPlayerLeaveGameEvent(player, plugin.getGameManager().getGameByClassName(playerGames.remove(uuid))));
         } else {
-            playerGames.put(player, game.getClass().getCanonicalName());
-            return true;
+            GgPlayerJoinGameEvent e = new GgPlayerJoinGameEvent(player, game);
+            Bukkit.getPluginManager().callEvent(e);
+            if (e.isCancelled()) {
+                return false;
+            }
+
+            playerGames.put(uuid, game.getClass().getCanonicalName());
         }
+        return true;
     }
 
     @Override
-    public boolean isPlayerInGame(Player player) {
-        return playerGames.get(player) != null;
+    public boolean isPlayerInGame(@NonNull Player player) {
+        return playerGames.get(player.getUniqueId()) != null;
     }
 
     @Override
-    public GamePlayer castBukkitPlayer(Player player) {
-        return null;
+    public GamePlayer castBukkitPlayer(@NonNull Player player) {
+        GgPlayer p = loadedPlayers.get(player.getUniqueId());
+        if (p == null) {
+            p = new GgPlayer(player.getUniqueId());
+            loadedPlayers.put(player.getUniqueId(), p);
+        }
+        return p;
+    }
+
+    public void playerDisconnect(@NonNull Player player) {
+        setPlayerGame(player, null);
+        loadedPlayers.remove(player.getUniqueId());
     }
 
 }

@@ -1,4 +1,4 @@
-package com.stealthyone.mcb.gamegine.signs;
+package com.stealthyone.mcb.gamegine.backend.signs;
 
 import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.signs.GameSign;

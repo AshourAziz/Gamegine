@@ -4,14 +4,18 @@ import com.stealthyone.mcb.gamegine.api.Gamegine;
 import com.stealthyone.mcb.gamegine.api.GamegineAPI;
 import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
 import com.stealthyone.mcb.gamegine.backend.arenas.GgArenaManager;
+import com.stealthyone.mcb.gamegine.api.hooks.plugins.defaults.HookWorldEdit;
+import com.stealthyone.mcb.gamegine.api.hooks.plugins.defaults.HookWorldGuard;
 import com.stealthyone.mcb.gamegine.commands.CmdGamegine;
 import com.stealthyone.mcb.gamegine.commands.CmdGames;
-import com.stealthyone.mcb.gamegine.games.GgGameManager;
+import com.stealthyone.mcb.gamegine.backend.games.GgGameManager;
+import com.stealthyone.mcb.gamegine.backend.hooks.GgHookManager;
 import com.stealthyone.mcb.gamegine.listeners.PlayerListener;
 import com.stealthyone.mcb.gamegine.players.GgPlayerManager;
-import com.stealthyone.mcb.gamegine.signs.GgSignManager;
+import com.stealthyone.mcb.gamegine.backend.signs.GgSignManager;
 import com.stealthyone.mcb.stbukkitlib.help.HelpManager;
 import com.stealthyone.mcb.stbukkitlib.messages.MessageManager;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -19,16 +23,17 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class GameginePlugin extends JavaPlugin implements GamegineAPI {
 
     /* Configuration */
-    private boolean isDebug;
+    @Getter private boolean isDebug;
     private int autosaveInterval;
 
     /* Misc Plugin Managers */
-    private HelpManager helpManager;
-    private MessageManager messageManager;
+    @Getter private HelpManager helpManager;
+    @Getter private MessageManager messageManager;
 
     /* Gamegine Managers */
     private GgArenaManager arenaManager;
     private GgGameManager gameManager;
+    private GgHookManager hookManager;
     private GgPlayerManager playerManager;
     private GgSignManager signManager;
 
@@ -48,6 +53,9 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
         GamegineLogger.debug("Setting up plugin managers...");
         helpManager = new HelpManager(this);
         helpManager.reload();
+        hookManager = new GgHookManager(this);
+        hookManager.registerHook(new HookWorldEdit());
+        hookManager.registerHook(new HookWorldGuard());
         messageManager = new MessageManager(this);
         messageManager.reloadMessages();
 
@@ -70,6 +78,7 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
     @Override
     public void onDisable() {
         GamegineLogger.info(String.format("Gamegine v%s by Stealth2800 successfully DISABLED.", getVersion()));
+        Gamegine.setInstance(null);
     }
 
     @Override
@@ -93,11 +102,6 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
     }
 
     @Override
-    public boolean isDebug() {
-        return isDebug;
-    }
-
-    @Override
     public GgArenaManager getArenaManager() {
         return arenaManager;
     }
@@ -107,12 +111,9 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
         return gameManager;
     }
 
-    public HelpManager getHelpManager() {
-        return helpManager;
-    }
-
-    public MessageManager getMessageManager() {
-        return messageManager;
+    @Override
+    public GgHookManager getHookManager() {
+        return hookManager;
     }
 
     @Override
