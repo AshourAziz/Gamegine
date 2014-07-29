@@ -24,28 +24,29 @@ public class GgPlayerManager implements PlayerManager {
     private Map<UUID, String> playerGames = new HashMap<>();
 
     @Override
-    public boolean setPlayerGame(@NonNull Player player, Game game) {
+    public PlayerGameResponse setPlayerGame(@NonNull Player player, Game game) {
         if (game != null && !plugin.getGameManager().isGameRegistered(game)) {
             throw new IllegalArgumentException("Cannot set player's current game to '" + game.getClass().getCanonicalName() + "' - game isn't registered!");
         }
 
         UUID uuid = player.getUniqueId();
 
-        if (game != null && isPlayerInGame(player)) return false; // Player is already in a game.
-        if (game == null && !isPlayerInGame(player)) return false; // Player is already not in a game.
+        if (game != null && isPlayerInGame(player)) return PlayerGameResponse.ALREADY_IN_GAME; // Player is already in a game.
+        if (game == null && !isPlayerInGame(player)) return PlayerGameResponse.ALREADY_NOT_IN_GAME; // Player is already not in a game.
 
         if (game == null) {
             Bukkit.getPluginManager().callEvent(new GgPlayerLeaveGameEvent(player, plugin.getGameManager().getGameByClassName(playerGames.remove(uuid))));
+            return PlayerGameResponse.LEFT;
         } else {
             GgPlayerJoinGameEvent e = new GgPlayerJoinGameEvent(player, game);
             Bukkit.getPluginManager().callEvent(e);
             if (e.isCancelled()) {
-                return false;
+                return PlayerGameResponse.JOIN_EVENT_CANCELLED;
             }
 
             playerGames.put(uuid, game.getClass().getCanonicalName());
+            return PlayerGameResponse.JOINED;
         }
-        return true;
     }
 
     @Override
