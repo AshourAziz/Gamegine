@@ -2,6 +2,7 @@ package com.stealthyone.mcb.gamegine;
 
 import com.stealthyone.mcb.gamegine.api.Gamegine;
 import com.stealthyone.mcb.gamegine.api.GamegineAPI;
+import com.stealthyone.mcb.gamegine.api.hooks.plugins.defaults.HookInSigns;
 import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
 import com.stealthyone.mcb.gamegine.backend.arenas.GgArenaManager;
 import com.stealthyone.mcb.gamegine.api.hooks.plugins.defaults.HookWorldEdit;
@@ -53,9 +54,13 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
         GamegineLogger.debug("Setting up plugin managers...");
         helpManager = new HelpManager(this);
         helpManager.reload();
+
+        // Set up default hooks.
         hookManager = new GgHookManager(this);
         hookManager.registerHook(new HookWorldEdit());
         hookManager.registerHook(new HookWorldGuard());
+        hookManager.registerHook(new HookInSigns());
+
         messageManager = new MessageManager(this);
         messageManager.reloadMessages();
 
