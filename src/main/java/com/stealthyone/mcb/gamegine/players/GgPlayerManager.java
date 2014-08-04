@@ -11,9 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @RequiredArgsConstructor
 public class GgPlayerManager implements PlayerManager {
@@ -22,6 +20,7 @@ public class GgPlayerManager implements PlayerManager {
 
     private Map<UUID, GgPlayer> loadedPlayers = new HashMap<>();
     private Map<UUID, String> playerGames = new HashMap<>();
+    private Map<String, Set<UUID>> gamePlayers = new HashMap<>();
 
     @Override
     public PlayerGameResponse setPlayerGame(@NonNull Player player, Game game) {
@@ -35,7 +34,11 @@ public class GgPlayerManager implements PlayerManager {
         if (game == null && !isPlayerInGame(player)) return PlayerGameResponse.ALREADY_NOT_IN_GAME; // Player is already not in a game.
 
         if (game == null) {
-            Bukkit.getPluginManager().callEvent(new GgPlayerLeaveGameEvent(player, plugin.getGameManager().getGameByClassName(playerGames.remove(uuid))));
+            Game oldGame = plugin.getGameManager().getGameByClassName(playerGames.remove(uuid));
+            Bukkit.getPluginManager().callEvent(new GgPlayerLeaveGameEvent(player, oldGame));
+
+            playerGames.remove(uuid);
+            getGamePlayersSet(oldGame).remove(uuid);
             return PlayerGameResponse.LEFT;
         } else {
             GgPlayerJoinGameEvent e = new GgPlayerJoinGameEvent(player, game);
@@ -45,8 +48,26 @@ public class GgPlayerManager implements PlayerManager {
             }
 
             playerGames.put(uuid, game.getClass().getCanonicalName());
+            getGamePlayersSet(game).add(uuid);
             return PlayerGameResponse.JOINED;
         }
+    }
+
+    @Override
+    public PlayerGameResponse setPlayerGame(@NonNull GamePlayer player, Game game) {
+        Player p = Bukkit.getPlayer(player.getUuid());
+        if (p == null) throw new IllegalArgumentException("Player cannot be offline.");
+        return setPlayerGame(p, game);
+    }
+
+    private Set<UUID> getGamePlayersSet(Game game) {
+        String gameClass = game.getClass().getCanonicalName();
+        Set<UUID> set = gamePlayers.get(gameClass);
+        if (set == null) {
+            set = new HashSet<>();
+            gamePlayers.put(gameClass, set);
+        }
+        return set;
     }
 
     @Override
@@ -62,6 +83,18 @@ public class GgPlayerManager implements PlayerManager {
             loadedPlayers.put(player.getUniqueId(), p);
         }
         return p;
+    }
+
+    @Override
+    public Collection<Player> getGamePlayers(@NonNull Game game) {
+        Set<Player> players = new HashSet<>();
+        String gameClass = game.getClass().getCanonicalName();
+        if (gamePlayers.containsKey(gameClass)) {
+            for (UUID uuid : gamePlayers.get(gameClass)) {
+                players.add(Bukkit.getPlayer(uuid));
+            }
+        }
+        return players;
     }
 
     public void playerDisconnect(@NonNull Player player) {
