@@ -7,6 +7,8 @@ gamestates:
   resetting: '&4RESETTING'
 errors:
   cooldowns_system_disabled: '&cCooldowns are disabled on this server.'
+  game_cannot_join: '&cYou cannot join this game: {REASON}'
+  game_not_found: '&cUnable to find game: ''&6{NAME}&c''.'
   must_be_player: '&cYou must be a player to do this.'
   no_permission: '&cYou do not have permission to do this.'
   reload_error: '{TAG}&cAn error occurred while reloading Gamegine: &6{MESSAGE}'
@@ -16,11 +18,14 @@ errors:
 notices:
   cooldown_ended: '&aCooldown ''&6%s&a'' has ended.'
   cooldowns_player_has_none: '&c&oNo cooldowns.'
+  game_joined: '&9Successfully joined game: &6{GAME}&9.'
   plugin_reloaded: '{TAG}&9Plugin configuration &creloaded &9from the disk.'
   plugin_saved: '{TAG}&9Plugin data and configuration &asaved &9to the disk.'
 usages:
+  tag: '&4USAGE: '
   gamegine_help: '&cType /&4{LABEL} help &cfor help.'
   games_help: '&cType &4/{LABEL} help &cfor help.'
+  games_join: '{TAG}/{LABEL} join <game name>'
 plugin:
   cmd_games_list:
   - '&8=====&aRegistered Games &6(pg.{PAGE}/{MAXPAGES})&8====='
