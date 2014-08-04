@@ -70,8 +70,9 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
         playerManager = new GgPlayerManager(this);
         signManager = new GgSignManager(this);
 
-        GamegineLogger.debug("Registering events...");
+        GamegineLogger.debug("Registering listeners...");
         Bukkit.getPluginManager().registerEvents(new PlayerListener(this), this);
+        Bukkit.getPluginManager().registerEvents(signManager, this);
 
         GamegineLogger.debug("Registering commands...");
         getCommand("gamegine").setExecutor(new CmdGamegine(this));
