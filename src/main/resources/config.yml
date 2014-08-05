@@ -12,4 +12,11 @@ Selections:
   Wand item: RECORD_9:0
 Signs:
   Enabled: true
-  Interact delay: 5
+  Interact delay: 20
+  Enable InSigns: true
+  Formats:
+    Game not found:
+    - '&a&l\u300AGamegine\u300B'
+    - '&4&oGAME NOT FOUND'
+    - ''
+    - '&c{GAME}'
