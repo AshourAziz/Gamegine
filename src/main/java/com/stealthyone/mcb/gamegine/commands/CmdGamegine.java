@@ -60,9 +60,7 @@ public class CmdGamegine implements CommandExecutor {
         if (!PermissionNode.RELOAD.isAllowedAlert(sender)) return;
 
         try {
-            plugin.reloadConfig();
-            plugin.getHelpManager().reload();
-            plugin.getMessageManager().reloadMessages();
+            plugin.reloadAll();
             NoticeMessages.PLUGIN_RELOADED.sendTo(sender);
         } catch (Exception ex) {
             ErrorMessages.RELOAD_ERROR.sendTo(sender, new QuickMap<>("{MESSAGE}", ex.getMessage()).build());
@@ -78,7 +76,7 @@ public class CmdGamegine implements CommandExecutor {
         if (!PermissionNode.SAVE.isAllowedAlert(sender)) return;
 
         try {
-            plugin.saveConfig();
+            plugin.saveAll();
             NoticeMessages.PLUGIN_SAVED.sendTo(sender);
         } catch (Exception ex) {
             ErrorMessages.SAVE_ERROR.sendTo(sender, new QuickMap<>("{MESSAGE}", ex.getMessage()).build());

@@ -115,7 +115,13 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
     public void reloadAll() {
         reloadConfig();
 
+        helpManager.reload();
+        messageManager.reloadMessages();
         signManager.reload();
+    }
+
+    public void saveAll() {
+        saveConfig();
     }
 
     @Override
