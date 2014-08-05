@@ -8,7 +8,6 @@ import com.stealthyone.mcb.gamegine.messages.Messages.ErrorMessages;
 import com.stealthyone.mcb.gamegine.messages.Messages.PluginMessages;
 import com.stealthyone.mcb.gamegine.messages.Messages.UsageMessages;
 import com.stealthyone.mcb.gamegine.permissions.PermissionNode;
-import com.stealthyone.mcb.stbukkitlib.messages.Message;
 import com.stealthyone.mcb.stbukkitlib.utils.MessageUtils;
 import com.stealthyone.mcb.stbukkitlib.utils.MiscUtils;
 import com.stealthyone.mcb.stbukkitlib.utils.QuickMap;
@@ -55,41 +54,14 @@ public class CmdGames implements CommandExecutor {
         return true;
     }
 
-    private boolean performBasicChecks(CommandSender sender, PermissionNode perm, boolean mustBePlayer) {
-        if (mustBePlayer && !(sender instanceof Player)) {
-            plugin.getMessageManager().getMessage("errors.must_be_player").sendTo(sender);
-            return false;
-        } else if (perm != null && !perm.isAllowedAlert(sender)) {
-            return false;
-        }
-        return true;
-    }
-
-    private boolean performArgsCheck(CommandSender sender, String label, int argsLength, int reqArgsLength, Message usageMessage) {
-        if (argsLength < reqArgsLength) {
-            usageMessage.sendTo(sender, new QuickMap<>("{LABEL}", label).build());
-            return false;
-        }
-        return true;
-    }
-
-    private Game retrieveGame(CommandSender sender, String name) {
-        Game game = plugin.getGameManager().getGameByName(name);
-        if (game == null) {
-            plugin.getMessageManager().getMessage("errors.game_not_found").sendTo(sender, new QuickMap<>("{NAME}", name).build());
-            return null;
-        }
-        return game;
-    }
-
     /*
      * Join a registered game.
      */
     private void cmdJoin(CommandSender sender, String label, String[] args) {
-        if (!performBasicChecks(sender, PermissionNode.GAMES_JOIN, true)
-            || !performArgsCheck(sender, label, args.length, 2, plugin.getMessageManager().getMessage("usages.games_join"))) return;
+        if (!CommandUtils.performBasicChecks(plugin, sender, PermissionNode.GAMES_JOIN, true)
+            || !CommandUtils.performArgsCheck(plugin, sender, label, args.length, 2, plugin.getMessageManager().getMessage("usages.games_join"))) return;
 
-        Game game = retrieveGame(sender, args[1]);
+        Game game = CommandUtils.retrieveGame(plugin, sender, args[1]);
         if (game == null) return;
 
         if (!(game instanceof GameJoinModule)) {

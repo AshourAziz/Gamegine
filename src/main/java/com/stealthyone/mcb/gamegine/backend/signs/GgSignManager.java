@@ -1,53 +1,293 @@
 package com.stealthyone.mcb.gamegine.backend.signs;
 
 import com.stealthyone.mcb.gamegine.GameginePlugin;
-import com.stealthyone.mcb.gamegine.api.signs.GameSign;
+import com.stealthyone.mcb.gamegine.api.games.Game;
+import com.stealthyone.mcb.gamegine.api.hooks.plugins.defaults.HookInSigns;
+import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
+import com.stealthyone.mcb.gamegine.api.signs.ActiveGameSign;
+import com.stealthyone.mcb.gamegine.api.signs.GameSignType;
 import com.stealthyone.mcb.gamegine.api.signs.SignManager;
-import org.apache.commons.lang.Validate;
+import com.stealthyone.mcb.gamegine.api.signs.variables.SignVariable;
+import com.stealthyone.mcb.gamegine.utils.BlockLocation;
+import com.stealthyone.mcb.stbukkitlib.storage.YamlFileManager;
+import de.blablubbabc.insigns.SignSendEvent;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.Sign;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.util.*;
+import java.util.regex.Pattern;
 
+@RequiredArgsConstructor
 public class GgSignManager implements Listener, SignManager {
 
-    private GameginePlugin plugin;
+    private final static Pattern YAML_FILE_PATTERN = Pattern.compile("(.+).yml");
 
-    private Map<Location, GameSign> registeredSigns = new HashMap<>();
+    private final GameginePlugin plugin;
 
-    public GgSignManager(GameginePlugin plugin) {
-        this.plugin = plugin;
+    /* Configuration. */
+    private boolean inSignsEnabled;
+    private InSignsListener inSignsListener;
+
+    private List<String> gameNotFoundFormat;
+
+    /* Sign text variables. */
+    private Map<String, SignVariable> registeredVariables = new HashMap<>();
+    private Map<String, String> variableKeys = new HashMap<>();
+
+    /* Sign types. */
+    private YamlFileManager signTypesFile;
+
+    private Map<String, GameSignType> registeredSignTypes = new HashMap<>();
+    private Map<String, List<String>> configuredFormats = new HashMap<>();
+
+    /* Loaded signs. */
+    private File activeSignsDir;
+
+    private Map<BlockLocation, ActiveGameSign> activeSigns = new HashMap<>();
+    private Map<String, Set<BlockLocation>> gameActiveSigns = new HashMap<>();
+
+    private Set<BlockLocation> pendingActiveSignLocations = new HashSet<>();
+    private Map<String, List<String>> pendingActiveSigns = new HashMap<>(); // Type name, list of file names.
+
+    /**
+     * Load sign manager data.
+     */
+    public void load() {
+        // Load sign types
+        signTypesFile = new YamlFileManager(plugin.getDataFolder() + File.separator + "signTypes.yml");
+
+        // Load active signs
+        activeSignsDir = new File(plugin.getDataFolder() + File.separator + "data" + File.separator + "active_signs");
+        activeSignsDir.mkdirs();
+
+        for (File file : activeSignsDir.listFiles()) {
+            if (!YAML_FILE_PATTERN.matcher(file.getName()).matches()) continue;
+            loadActiveSign(file);
+        }
+
+        reload();
+    }
+
+    /**
+     * Loads an active sign from its file.
+     *
+     * @param file File to load from.
+     */
+    private void loadActiveSign(File file) {
+        YamlFileManager yamlFile = new YamlFileManager(file);
+        FileConfiguration config = yamlFile.getConfig();
+
+        String typeName = config.getString("type");
+        if (typeName == null) {
+            GamegineLogger.warning("[SignManager] Unable to load active sign from " + file.getPath() + " - no type defined, deleting file.");
+            file.delete();
+            return;
+        }
+
+        BlockLocation location = (BlockLocation) config.get("location");
+
+        if (!registeredSignTypes.containsKey(typeName)
+                && (!pendingActiveSigns.containsKey(typeName) || (pendingActiveSigns.containsKey(typeName) && !pendingActiveSigns.get(typeName).contains(file.getAbsolutePath())))) {
+            if (location == null || location.getWorld() == null) {
+                GamegineLogger.warning("[SignManager] Unable to load active sign from " + file.getPath() + " - invalid location defined, deleting file.");
+                file.delete();
+                return;
+            }
+
+            if (pendingActiveSignLocations.contains(location)) {
+                GamegineLogger.warning("[SignManager] Unable to load active sign from " + file.getPath() + " - location already in use, deleting file.");
+                file.delete();
+                return;
+            }
+
+            if (!validateSignBlock(location.getBlock())) {
+                GamegineLogger.warning("[SignManager] Unable to load active sign from " + file.getPath() + " - block at location " + location.toString() + " is not a sign, deleting file.");
+                file.delete();
+                return;
+            }
+
+            List<String> filePaths = pendingActiveSigns.get(typeName);
+            if (filePaths == null) {
+                filePaths = new ArrayList<>();
+                pendingActiveSigns.put(typeName, filePaths);
+            }
+            filePaths.add(file.getAbsolutePath());
+            pendingActiveSignLocations.add(location);
+            GamegineLogger.warning("[SignManager] Unable to load active sign from " + file.getPath() + " - type '" + typeName + "' not registered, added to pending active sign list.");
+            return;
+        }
+
+        GameSignType type = registeredSignTypes.get(typeName);
+        ActiveGameSign activeGameSign = new ActiveGameSign(type, yamlFile);
+        activeSigns.put(location, activeGameSign);
+
+        String gameName = activeGameSign.getGameClassName();
+        Set<BlockLocation> gameLocations = gameActiveSigns.get(gameName);
+        if (gameLocations == null) {
+            gameLocations = new HashSet<>();
+            gameActiveSigns.put(gameName, gameLocations);
+        }
+        gameLocations.add(location);
+
+        pendingActiveSignLocations.remove(location);
+        List<String> fileNames = pendingActiveSigns.get(typeName);
+        if (fileNames != null) {
+            fileNames.remove(file.getAbsolutePath());
+        }
+    }
+
+    /**
+     * Deletes a loaded active sign and deletes its file.
+     *
+     * @param sign Sign to unload and delete.
+     */
+    private void deleteActiveSign(ActiveGameSign sign) {
+        BlockLocation location = sign.getLocation();
+        if (location == null) return;
+
+        activeSigns.remove(location);
+
+        String gameName = sign.getGameClassName();
+        if (gameActiveSigns.containsKey(gameName)) {
+            gameActiveSigns.get(gameName).remove(location);
+        }
+        sign.getFile().getFile().delete();
+    }
+
+    /**
+     * Reload the sign manager's configuration.
+     */
+    public void reload() {
+        signTypesFile.reloadConfig();
+
+        FileConfiguration pConfig = plugin.getConfig();
+
+        gameNotFoundFormat = pConfig.getStringList("Signs.Formats.Game not found");
+        if (gameNotFoundFormat.size() != 4) {
+            gameNotFoundFormat = Arrays.asList(
+                    "" + ChatColor.GREEN + ChatColor.BOLD + "\u300AGamegine\u300B",
+                    ChatColor.DARK_RED + "GAME NOT FOUND",
+                    null,
+                    ChatColor.RED + "{GAME}"
+            );
+            GamegineLogger.warning("[SignManager] Game not found sign format is not 4 lines, using the default format.");
+        }
+
+        if (inSignsListener != null) {
+            SignSendEvent.getHandlerList().unregister(inSignsListener);
+            inSignsListener = null;
+        }
+
+        inSignsEnabled = plugin.getConfig().getBoolean("Signs.Enable InSigns", true);
+        if (inSignsEnabled && !plugin.getHookManager().isEnabled(HookInSigns.class)) {
+            inSignsEnabled = false;
+            GamegineLogger.info("[SignManager] InSigns is enabled in the config but not installed on the server!");
+        }
+
+        if (inSignsEnabled) {
+            Bukkit.getPluginManager().registerEvents(inSignsListener = new InSignsListener(), plugin);
+            GamegineLogger.info("[SignManager] Enabling InSigns support.");
+        } else {
+            GamegineLogger.info("[SignManager] InSigns support disabled.");
+        }
+
+        FileConfiguration typeConfig = signTypesFile.getConfig();
+        configuredFormats.clear();
+        for (GameSignType signType : registeredSignTypes.values()) {
+            String typeName = signType.getClass().getCanonicalName();
+            if (signType.isFormatConfigurable()) {
+                List<String> list = typeConfig.getStringList(typeName + ".format");
+                if (list != null) {
+                    if (list.size() != 4) {
+                        GamegineLogger.warning("[SignManager] Unable to load custom sign type format for '" + typeName + "' - the format in signTypes.yml does not have 4 lines defined.");
+                    } else {
+                        configuredFormats.put(typeName, list);
+                        GamegineLogger.info("[SignManager] Loaded custom sign type format for '" + typeName + "'");
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks to see if an {@link com.stealthyone.mcb.gamegine.api.signs.ActiveGameSign} object's block is actually a sign or not.
+     *
+     * @param sign Sign to check.
+     * @return True if the block is a sign.
+     *         False if the block is not a sign.
+     */
+    private boolean validateActiveSignBlock(ActiveGameSign sign) {
+        Block block = sign.getLocation().getBlock();
+        boolean result = validateSignBlock(block);
+        if (!result) {
+            GamegineLogger.warning("[SignManager] The block for the active sign at " + sign.getLocation().toString() + " is not a sign, removing active sign.");
+        }
+        return result;
+    }
+
+    /**
+     * Checks to see if a block is actually a sign or not.
+     *
+     * @param block Block to check.
+     * @return True if the block is a sign.
+     *         False if the block is not a sign.
+     */
+    private boolean validateSignBlock(Block block) {
+        return block != null && (block.getType() == Material.SIGN_POST || block.getType() == Material.WALL_SIGN);
     }
 
     @Override
-    public boolean registerSign(GameSign sign) {
-        Validate.notNull(sign, "Sign cannot be null.");
-        Validate.notNull(sign.getLocation(), "Sign location cannot be null.");
+    public boolean registerVariable(@NonNull SignVariable variable) {
+        String varName = variable.getClass().getCanonicalName();
+        if (registeredVariables.containsKey(varName)) return false;
 
-        Location loc = sign.getLocation();
-        if (registeredSigns.containsKey(loc)) {
-            return false;
+        String key = variable.getKey();
+        if (!variableKeys.containsKey(key)) {
+            variableKeys.put(key, varName);
         }
-        registeredSigns.put(loc, sign);
+
+        boolean success = variableKeys.containsKey(varName);
+        if (success) {
+            registeredVariables.put(varName, variable);
+        }
+        return success;
+    }
+
+    @Override
+    public boolean registerSignType(@NonNull GameSignType signType) {
+        String name = signType.getClass().getCanonicalName();
+        if (registeredSignTypes.containsKey(name)) return false;
+
+        if (signType.getDefaultFormat() == null || signType.getDefaultFormat().size() != 4) {
+            throw new IllegalArgumentException("Sign type '" + name + "' does not have a valid format.");
+        }
+
+        registeredSignTypes.put(name, signType);
+        GamegineLogger.info("[SignManager] Registered sign type '" + name + "'");
+        if (registeredSignTypes.containsKey(name)) {
+            GamegineLogger.info("[SignManager] Found pending active signs for this type, loading them now.");
+            for (String filePath : pendingActiveSigns.remove(name)) {
+                loadActiveSign(new File(filePath));
+            }
+        }
         return true;
     }
 
     @Override
-    public boolean unregisterSign(Location location) {
-        Validate.notNull(location, "Location cannot be null.");
-
-        return registeredSigns.remove(location) != null;
-    }
-
-    @Override
-    public GameSign getSign(Location location) {
-        return registeredSigns.get(location);
+    public ActiveGameSign getSign(@NonNull Location location) {
+        return activeSigns.get(new BlockLocation(location));
     }
 
     @EventHandler
@@ -57,14 +297,123 @@ public class GgSignManager implements Listener, SignManager {
             return;
         }
 
-        GameSign gameSign = plugin.getSignManager().getSign(block.getLocation());
+        ActiveGameSign gameSign = plugin.getSignManager().getSign(block.getLocation());
         if (gameSign != null) {
-            gameSign.playerInteract(e);
+            switch (e.getAction()) {
+                case RIGHT_CLICK_BLOCK:
+                    gameSign.handleRightClick(e.getPlayer());
+                    return;
+
+                case LEFT_CLICK_BLOCK:
+                    gameSign.handleLeftClick(e.getPlayer());
+                    return;
+
+                default:
+                    e.getPlayer().sendMessage(ChatColor.RED + "An unknown error occurred, contact an administrator.");
+            }
         }
     }
 
-    @EventHandler
-    public void onSignChange(SignChangeEvent e) {
+    /**
+     * Returns the current format of a sign type.
+     *
+     * @param type Type to get format of.
+     * @return List of strings that represent the format.
+     */
+    private List<String> getSignFormat(@NonNull GameSignType type) {
+        String typeName = type.getClass().getCanonicalName();
+        return configuredFormats.containsKey(typeName) ? configuredFormats.get(typeName) : type.getDefaultFormat();
+    }
+
+    /**
+     * Updates a sign's lines.
+     *
+     * @param sign Sign to update.
+     */
+    public void updateSign(ActiveGameSign sign) {
+        if (!validateActiveSignBlock(sign)) return;
+
+        Sign signBlock = (Sign) sign.getLocation().getBlock().getState();
+        List<String> newLines = new ArrayList<>(getSignFormat(sign.getType()));
+
+        Game game = sign.getGame();
+        if (game == null) {
+            String[] gameClassSplit = sign.getGameClassName().split("\\.");
+            String gameName = gameClassSplit[gameClassSplit.length - 1];
+
+            for (int i = 0; i < 4; i++) {
+                newLines.set(i, ChatColor.translateAlternateColorCodes('&', gameNotFoundFormat.get(i).replace("{GAME}", gameName)));
+            }
+        } else {
+            for (SignVariable var : registeredVariables.values()) {
+                String varName = var.getClass().getCanonicalName();
+                String replacement = var.getReplacement(sign.getGame());
+
+                for (int i = 0; i < 4; i++) {
+                    String string = newLines.get(i);
+                    if (string != null) {
+                        newLines.set(i, string.replace(varName, replacement));
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < 4; i++) {
+            String line = newLines.get(i);
+            if (line == null) continue;
+            signBlock.setLine(i + 1, ChatColor.translateAlternateColorCodes('&', newLines.get(i)));
+        }
+        signBlock.update();
+    }
+
+    /**
+     * Listens for InSigns's SignSendEvent and modifies it accordingly.
+     */
+    public class InSignsListener implements Listener {
+
+        @EventHandler
+        public void onSignSend(SignSendEvent e) {
+            BlockLocation loc = new BlockLocation(e.getLocation());
+            ActiveGameSign sign = activeSigns.get(loc);
+            if (sign != null) {
+                List<String> newLines = getLines(sign, e.getPlayer());
+
+                for (int i = 0; i < 4; i++) {
+                    String line = newLines.get(i);
+                    if (line == null) continue;
+                    e.setLine(i + 1, ChatColor.translateAlternateColorCodes('&', newLines.get(i)));
+                }
+            }
+        }
+
+        private List<String> getLines(ActiveGameSign sign, Player p) {
+            List<String> newLines = new ArrayList<>(getSignFormat(sign.getType()));
+
+            Game game = sign.getGame();
+            if (game == null) {
+                String[] gameClassSplit = sign.getGameClassName().split("\\.");
+                String gameName = gameClassSplit[gameClassSplit.length - 1];
+
+                for (int i = 0; i < 4; i++) {
+                    newLines.set(i, ChatColor.translateAlternateColorCodes('&', gameNotFoundFormat.get(i).replace("{GAME}", gameName)));
+                }
+                return newLines;
+            }
+
+            for (SignVariable var : registeredVariables.values()) {
+                String varName = var.getClass().getCanonicalName();
+                String replacement = var.getReplacement(game);
+
+                for (int i = 0; i < 4; i++) {
+                    String string = newLines.get(i);
+                    if (string != null) {
+                        newLines.set(i, string.replace(varName, replacement));
+                    }
+                }
+            }
+
+            return newLines;
+        }
 
     }
 
