@@ -10,6 +10,7 @@ import com.stealthyone.mcb.gamegine.backend.arenas.GgArenaManager;
 import com.stealthyone.mcb.gamegine.backend.games.GgGameManager;
 import com.stealthyone.mcb.gamegine.backend.hooks.GgHookManager;
 import com.stealthyone.mcb.gamegine.backend.signs.GgSignManager;
+import com.stealthyone.mcb.gamegine.backend.signs.variables.SignGameIDVar;
 import com.stealthyone.mcb.gamegine.backend.signs.variables.SignGameNameVar;
 import com.stealthyone.mcb.gamegine.backend.signs.variables.SignPlayerCountVar;
 import com.stealthyone.mcb.gamegine.commands.CmdGamegine;
@@ -82,6 +83,7 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
 
         GamegineLogger.debug("Loading defaults...");
         signManager.registerVariable(new SignGameNameVar());
+        signManager.registerVariable(new SignGameIDVar());
         signManager.registerVariable(new SignPlayerCountVar());
 
         GamegineLogger.debug("Registering listeners...");

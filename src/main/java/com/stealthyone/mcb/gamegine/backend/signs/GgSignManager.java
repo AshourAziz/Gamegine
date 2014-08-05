@@ -1,13 +1,13 @@
 package com.stealthyone.mcb.gamegine.backend.signs;
 
 import com.stealthyone.mcb.gamegine.GameginePlugin;
-import com.stealthyone.mcb.gamegine.api.games.Game;
 import com.stealthyone.mcb.gamegine.api.hooks.plugins.defaults.HookInSigns;
 import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
 import com.stealthyone.mcb.gamegine.api.signs.ActiveGameSign;
 import com.stealthyone.mcb.gamegine.api.signs.GameSignType;
 import com.stealthyone.mcb.gamegine.api.signs.SignManager;
 import com.stealthyone.mcb.gamegine.api.signs.variables.SignVariable;
+import com.stealthyone.mcb.gamegine.lib.games.instances.GameInstance;
 import com.stealthyone.mcb.gamegine.utils.BlockLocation;
 import com.stealthyone.mcb.stbukkitlib.storage.YamlFileManager;
 import de.blablubbabc.insigns.SignSendEvent;
@@ -131,13 +131,31 @@ public class GgSignManager implements Listener, SignManager {
 
         GameSignType type = registeredSignTypes.get(typeName);
         ActiveGameSign activeGameSign = new ActiveGameSign(type, yamlFile);
+        try {
+            activeGameSign.getGame();
+        } catch (IllegalArgumentException ex) {
+            // gameInstanceRef is invalid.
+            GamegineLogger.warning("[SignManager] Unable to load active sign from " + file.getPath() + " - invalid game instance reference.");
+            file.delete();
+            return;
+        } catch (UnsupportedOperationException ex) {
+            // Game does not implement SingleInstanceGame or MultiInstanceGame.
+            GamegineLogger.warning("[SignManager] Unable to load active sign from " + file.getPath() + " - game does not support signs.");
+            file.delete();
+            return;
+        } catch (IllegalStateException eX) {
+            // Game is not loaded. We don't have to worry about this.
+        }
+
         activeSigns.put(location, activeGameSign);
 
-        String gameName = activeGameSign.getGameClassName();
-        Set<BlockLocation> gameLocations = gameActiveSigns.get(gameName);
+        String[] gameInstanceRef = activeGameSign.getGameInstanceRef().split(":");
+        String gameClassName = gameInstanceRef[0];
+
+        Set<BlockLocation> gameLocations = gameActiveSigns.get(gameClassName);
         if (gameLocations == null) {
             gameLocations = new HashSet<>();
-            gameActiveSigns.put(gameName, gameLocations);
+            gameActiveSigns.put(gameClassName, gameLocations);
         }
         gameLocations.add(location);
 
@@ -159,7 +177,7 @@ public class GgSignManager implements Listener, SignManager {
 
         activeSigns.remove(location);
 
-        String gameName = sign.getGameClassName();
+        String gameName = sign.getGame().getOwner().getClass().getCanonicalName();
         if (gameActiveSigns.containsKey(gameName)) {
             gameActiveSigns.get(gameName).remove(location);
         }
@@ -336,24 +354,29 @@ public class GgSignManager implements Listener, SignManager {
         Sign signBlock = (Sign) sign.getLocation().getBlock().getState();
         List<String> newLines = new ArrayList<>(getSignFormat(sign.getType()));
 
-        Game game = sign.getGame();
-        if (game == null) {
-            String[] gameClassSplit = sign.getGameClassName().split("\\.");
+        GameInstance gameInstance;
+        try {
+            gameInstance = sign.getGame();
+        } catch (IllegalStateException ex) {
+            // Game not loaded.
+
+            String[] gameClassSplit = sign.getGameInstanceRef().split(":")[0].split("\\.");
             String gameName = gameClassSplit[gameClassSplit.length - 1];
 
             for (int i = 0; i < 4; i++) {
                 newLines.set(i, ChatColor.translateAlternateColorCodes('&', gameNotFoundFormat.get(i).replace("{GAME}", gameName)));
             }
-        } else {
-            for (SignVariable var : registeredVariables.values()) {
-                String varName = var.getClass().getCanonicalName();
-                String replacement = var.getReplacement(sign.getGame());
+            return;
+        }
 
-                for (int i = 0; i < 4; i++) {
-                    String string = newLines.get(i);
-                    if (string != null) {
-                        newLines.set(i, string.replace(varName, replacement));
-                    }
+        for (SignVariable var : registeredVariables.values()) {
+            String varName = var.getClass().getCanonicalName();
+            String replacement = var.getReplacement(gameInstance);
+
+            for (int i = 0; i < 4; i++) {
+                String string = newLines.get(i);
+                if (string != null) {
+                    newLines.set(i, string.replace(varName, replacement));
                 }
             }
         }
@@ -389,9 +412,13 @@ public class GgSignManager implements Listener, SignManager {
         private List<String> getLines(ActiveGameSign sign, Player p) {
             List<String> newLines = new ArrayList<>(getSignFormat(sign.getType()));
 
-            Game game = sign.getGame();
-            if (game == null) {
-                String[] gameClassSplit = sign.getGameClassName().split("\\.");
+            GameInstance gameInstance;
+            try {
+                gameInstance = sign.getGame();
+            } catch (IllegalStateException ex) {
+                // Game not loaded.
+
+                String[] gameClassSplit = sign.getGameInstanceRef().split(":")[0].split("\\.");
                 String gameName = gameClassSplit[gameClassSplit.length - 1];
 
                 for (int i = 0; i < 4; i++) {
@@ -402,7 +429,7 @@ public class GgSignManager implements Listener, SignManager {
 
             for (SignVariable var : registeredVariables.values()) {
                 String varName = var.getClass().getCanonicalName();
-                String replacement = var.getReplacement(game);
+                String replacement = var.getReplacement(gameInstance);
 
                 for (int i = 0; i < 4; i++) {
                     String string = newLines.get(i);

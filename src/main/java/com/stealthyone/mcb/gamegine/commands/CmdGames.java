@@ -3,7 +3,7 @@ package com.stealthyone.mcb.gamegine.commands;
 import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.games.Game;
 import com.stealthyone.mcb.gamegine.api.games.GamePlayerAddException;
-import com.stealthyone.mcb.gamegine.api.games.modules.GameJoinModule;
+import com.stealthyone.mcb.gamegine.lib.games.instances.modules.GameJoinModule;
 import com.stealthyone.mcb.gamegine.messages.Messages.ErrorMessages;
 import com.stealthyone.mcb.gamegine.messages.Messages.PluginMessages;
 import com.stealthyone.mcb.gamegine.messages.Messages.UsageMessages;
