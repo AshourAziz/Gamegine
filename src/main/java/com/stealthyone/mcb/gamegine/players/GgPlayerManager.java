@@ -33,6 +33,25 @@ public class GgPlayerManager implements PlayerManager {
     private final Map<String, Set<UUID>> gameInstancePlayers = new HashMap<>(); // GameInstance reference, set of player UUIDs
 
     @Override
+    public PlayerGameResponse setPlayerGame(@NonNull Player player, Class<? extends Game> gameClass) {
+        if (gameClass == null) {
+            return setPlayerGame(player, (Game) null);
+        }
+
+        Game game = plugin.getGameManager().getGameByClass(gameClass);
+        if (game == null) {
+            throw new IllegalArgumentException("Cannot set player's current game to '" + gameClass.getCanonicalName() + "' - game isn't registered!");
+        }
+
+        return setPlayerGame(player, game);
+    }
+
+    @Override
+    public PlayerGameResponse setPlayerGame(@NonNull GamePlayer player, Class<? extends Game> gameClass) {
+        return setPlayerGame(castGamePlayer(player), gameClass);
+    }
+
+    @Override
     public PlayerGameResponse setPlayerGame(@NonNull Player player, Game game) {
         if (game != null && !plugin.getGameManager().isGameRegistered(game)) {
             throw new IllegalArgumentException("Cannot set player's current game to '" + game.getClass().getCanonicalName() + "' - game isn't registered!");
@@ -197,7 +216,7 @@ public class GgPlayerManager implements PlayerManager {
     }
 
     public void playerDisconnect(@NonNull Player player) {
-        setPlayerGame(player, null);
+        setPlayerGame(player, (Game) null);
         loadedPlayers.remove(player.getUniqueId());
     }
 
