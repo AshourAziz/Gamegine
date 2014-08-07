@@ -3,7 +3,7 @@ package com.stealthyone.mcb.gamegine.commands;
 import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.games.Game;
 import com.stealthyone.mcb.gamegine.api.games.GamePlayerAddException;
-import com.stealthyone.mcb.gamegine.lib.games.instances.modules.GameJoinModule;
+import com.stealthyone.mcb.gamegine.api.games.modules.GameJoinModule;
 import com.stealthyone.mcb.gamegine.messages.Messages.ErrorMessages;
 import com.stealthyone.mcb.gamegine.messages.Messages.PluginMessages;
 import com.stealthyone.mcb.gamegine.messages.Messages.UsageMessages;
@@ -81,9 +81,11 @@ public class CmdGames implements CommandExecutor {
 
             String msg = joinableGame.getJoinMessage((Player) sender);
             if (msg != null) {
-                sender.sendMessage(msg);
-            } else {
-                plugin.getMessageManager().getMessage("notices.game_joined").sendTo(sender, new QuickMap<>("{GAME}", game.getName()).build());
+                if (msg.equalsIgnoreCase("default")) {
+                    plugin.getMessageManager().getMessage("notices.game_joined").sendTo(sender, new QuickMap<>("{GAME}", game.getName()).build());
+                } else {
+                    sender.sendMessage(msg);
+                }
             }
         } catch (GamePlayerAddException ex) {
             plugin.getMessageManager().getMessage("errors.game_cannot_join").sendTo(sender, new QuickMap<>("{REASON}", ex.getMessage()).build());
@@ -130,7 +132,7 @@ public class CmdGames implements CommandExecutor {
             }
 
             messages.addAll(Arrays.asList(PluginMessages.CMD_GAMES_LIST_ITEM.getFormattedMessages(new QuickMap<String, String>()
-                .put("{NUM}", Integer.toString(index))
+                .put("{NUM}", Integer.toString(index + 1))
                 .put("{NAME}", game.getName())
                 .put("{AUTHORS}", StringUtils.stringListToString(game.getAuthors()))
                 .put("{VERSION}", game.getVersion())
