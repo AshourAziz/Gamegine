@@ -3,6 +3,7 @@ package com.stealthyone.mcb.gamegine.backend.games;
 import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.games.Game;
 import com.stealthyone.mcb.gamegine.api.games.GameManager;
+import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
 import com.stealthyone.mcb.gamegine.lib.games.InstanceGame;
 import com.stealthyone.mcb.gamegine.lib.games.instances.GameInstance;
 import com.stealthyone.mcb.gamegine.lib.games.instances.InvalidGameInstanceException;
@@ -26,10 +27,12 @@ public class GgGameManager implements GameManager {
     public boolean registerGame(@NonNull Game game) {
         String uniqueName = game.getClass().getCanonicalName();
         if (registeredGames.containsKey(uniqueName)) {
+            GamegineLogger.warning("Unable to register game '" + game.getName() + "' (" + uniqueName + ") - a game with the same name was already registered!");
             return false;
         } else {
             registeredGames.put(uniqueName, game);
             gameNameToClassIndex.put(game.getName().toLowerCase(), uniqueName);
+            GamegineLogger.info("Successfully registered game '" + game.getName() + "' v" + game.getVersion() + " by " + game.getAuthors().toString().replace("[", "").replace("]", "").replace(",", ""));
             return true;
         }
     }
