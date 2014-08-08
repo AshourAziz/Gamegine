@@ -8,6 +8,7 @@ import com.stealthyone.mcb.gamegine.api.signs.ActiveGameSign;
 import com.stealthyone.mcb.gamegine.api.signs.GameSignType;
 import com.stealthyone.mcb.gamegine.api.signs.SignManager;
 import com.stealthyone.mcb.gamegine.api.signs.variables.SignVariable;
+import com.stealthyone.mcb.gamegine.lib.games.InstanceGame;
 import com.stealthyone.mcb.gamegine.lib.games.instances.GameInstance;
 import com.stealthyone.mcb.gamegine.utils.BlockLocation;
 import com.stealthyone.mcb.stbukkitlib.storage.YamlFileManager;
@@ -415,8 +416,10 @@ public class GgSignManager implements Listener, SignManager {
      *
      * @param game The game to get the signs of.
      * @return Collection of signs.
+     * @throws java.lang.IllegalArgumentException if the Game is not an instance of {@link com.stealthyone.mcb.gamegine.lib.games.InstanceGame}
      */
     public Collection<ActiveGameSign> getActiveSigns(@NonNull Game game) {
+        if (!(game instanceof InstanceGame)) throw new IllegalArgumentException("Game cannot have signs - not an instance of InstanceGame.");
         Set<ActiveGameSign> signs = new LinkedHashSet<>();
         Set<BlockLocation> locations = gameActiveSigns.get(game.getClass().getCanonicalName());
         if (locations != null && !locations.isEmpty()) {

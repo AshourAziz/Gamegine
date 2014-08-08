@@ -39,4 +39,15 @@ public final class CommandUtils {
         return game;
     }
 
+    public static int getPage(GameginePlugin plugin, CommandSender sender, String[] args, int index) {
+        try {
+            return Integer.parseInt(args[index]);
+        } catch (IndexOutOfBoundsException ex) {
+            return 1;
+        } catch (NumberFormatException ex) {
+            plugin.getMessageManager().getMessage("errors.page_must_be_int").sendTo(sender);
+            return -1;
+        }
+    }
+
 }

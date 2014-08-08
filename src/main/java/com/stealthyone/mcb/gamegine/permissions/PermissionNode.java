@@ -7,6 +7,11 @@ public enum PermissionNode {
 
     GAMES_JOIN,
     GAMES_LIST,
+    SIGNS_CREATE,
+    SIGNS_INFO,
+    SIGNS_LIST,
+    SIGNS_TELEPORT,
+    SIGNS_TYPES,
     RELOAD,
     SAVE;
 
