@@ -1,6 +1,7 @@
 package com.stealthyone.mcb.gamegine.backend.signs;
 
 import com.stealthyone.mcb.gamegine.GameginePlugin;
+import com.stealthyone.mcb.gamegine.api.games.Game;
 import com.stealthyone.mcb.gamegine.api.hooks.plugins.defaults.HookInSigns;
 import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
 import com.stealthyone.mcb.gamegine.api.signs.ActiveGameSign;
@@ -50,6 +51,8 @@ public class GgSignManager implements Listener, SignManager {
     private YamlFileManager signTypesFile;
 
     private Map<String, GameSignType> registeredSignTypes = new HashMap<>();
+    private Map<String, String> typeToShortNameIndex = new HashMap<>();
+    private Map<String, String> shortNameToTypeIndex = new HashMap<>();
     private Map<String, List<String>> configuredFormats = new HashMap<>();
 
     /* Loaded signs. */
@@ -59,7 +62,7 @@ public class GgSignManager implements Listener, SignManager {
     private Map<String, Set<BlockLocation>> gameActiveSigns = new HashMap<>();
 
     private Set<BlockLocation> pendingActiveSignLocations = new HashSet<>();
-    private Map<String, List<String>> pendingActiveSigns = new HashMap<>(); // Type name, list of file names.
+    private Map<String, Set<String>> pendingActiveSigns = new HashMap<>(); // Type name, list of file names.
 
     /**
      * Load sign manager data.
@@ -85,7 +88,7 @@ public class GgSignManager implements Listener, SignManager {
      *
      * @param file File to load from.
      */
-    private void loadActiveSign(File file) {
+    private boolean loadActiveSign(File file) {
         YamlFileManager yamlFile = new YamlFileManager(file);
         FileConfiguration config = yamlFile.getConfig();
 
@@ -93,7 +96,7 @@ public class GgSignManager implements Listener, SignManager {
         if (typeName == null) {
             GamegineLogger.warning("[SignManager] Unable to load active sign from " + file.getPath() + " - no type defined, deleting file.");
             file.delete();
-            return;
+            return false;
         }
 
         BlockLocation location = (BlockLocation) config.get("location");
@@ -103,30 +106,30 @@ public class GgSignManager implements Listener, SignManager {
             if (location == null || location.getWorld() == null) {
                 GamegineLogger.warning("[SignManager] Unable to load active sign from " + file.getPath() + " - invalid location defined, deleting file.");
                 file.delete();
-                return;
+                return false;
             }
 
             if (pendingActiveSignLocations.contains(location)) {
                 GamegineLogger.warning("[SignManager] Unable to load active sign from " + file.getPath() + " - location already in use, deleting file.");
                 file.delete();
-                return;
+                return false;
             }
 
             if (!validateSignBlock(location.getBlock())) {
                 GamegineLogger.warning("[SignManager] Unable to load active sign from " + file.getPath() + " - block at location " + location.toString() + " is not a sign, deleting file.");
                 file.delete();
-                return;
+                return false;
             }
 
-            List<String> filePaths = pendingActiveSigns.get(typeName);
+            Set<String> filePaths = pendingActiveSigns.get(typeName);
             if (filePaths == null) {
-                filePaths = new ArrayList<>();
+                filePaths = new HashSet<>();
                 pendingActiveSigns.put(typeName, filePaths);
             }
             filePaths.add(file.getAbsolutePath());
             pendingActiveSignLocations.add(location);
             GamegineLogger.warning("[SignManager] Unable to load active sign from " + file.getPath() + " - type '" + typeName + "' not registered, added to pending active sign list.");
-            return;
+            return false;
         }
 
         GameSignType type = registeredSignTypes.get(typeName);
@@ -137,12 +140,12 @@ public class GgSignManager implements Listener, SignManager {
             // gameInstanceRef is invalid.
             GamegineLogger.warning("[SignManager] Unable to load active sign from " + file.getPath() + " - invalid game instance reference.");
             file.delete();
-            return;
+            return false;
         } catch (UnsupportedOperationException ex) {
             // Game does not implement SingleInstanceGame or MultiInstanceGame.
             GamegineLogger.warning("[SignManager] Unable to load active sign from " + file.getPath() + " - game does not support signs.");
             file.delete();
-            return;
+            return false;
         } catch (IllegalStateException eX) {
             // Game is not loaded. We don't have to worry about this.
         }
@@ -154,16 +157,17 @@ public class GgSignManager implements Listener, SignManager {
 
         Set<BlockLocation> gameLocations = gameActiveSigns.get(gameClassName);
         if (gameLocations == null) {
-            gameLocations = new HashSet<>();
+            gameLocations = new LinkedHashSet<>();
             gameActiveSigns.put(gameClassName, gameLocations);
         }
         gameLocations.add(location);
 
         pendingActiveSignLocations.remove(location);
-        List<String> fileNames = pendingActiveSigns.get(typeName);
+        Set<String> fileNames = pendingActiveSigns.get(typeName);
         if (fileNames != null) {
             fileNames.remove(file.getAbsolutePath());
         }
+        return true;
     }
 
     /**
@@ -272,15 +276,12 @@ public class GgSignManager implements Listener, SignManager {
         if (registeredVariables.containsKey(varName)) return false;
 
         String key = variable.getKey();
-        if (!variableKeys.containsKey(key)) {
-            variableKeys.put(key, varName);
-        }
+        if (variableKeys.containsKey(key)) return false;
 
-        boolean success = variableKeys.containsKey(varName);
-        if (success) {
-            registeredVariables.put(varName, variable);
-        }
-        return success;
+        variableKeys.put(key, varName);
+
+        registeredVariables.put(varName, variable);
+        return true;
     }
 
     @Override
@@ -294,6 +295,20 @@ public class GgSignManager implements Listener, SignManager {
 
         registeredSignTypes.put(name, signType);
         GamegineLogger.info("[SignManager] Registered sign type '" + name + "'");
+
+        String shortName = signType.getShortName();
+        if (shortName == null || shortName.isEmpty()) {
+            GamegineLogger.debug("No short name set for sign type '" + name + "' - will not attempt to register.");
+        } else if (shortName.contains(" ")) {
+            GamegineLogger.warning("Unable to register short name for sign type '" + name + "' - name is invalid (contains spaces).");
+        } else if (typeToShortNameIndex.containsKey(shortName.toLowerCase())) {
+            GamegineLogger.warning("Unable to register short name for sign type '" + name + "' - already registered.");
+        } else {
+            typeToShortNameIndex.put(shortName.toLowerCase(), name);
+            shortNameToTypeIndex.put(name, shortName);
+            GamegineLogger.info("Registered short name '" + shortName + "' for sign type '" + name + "'.");
+        }
+
         if (registeredSignTypes.containsKey(name)) {
             GamegineLogger.info("[SignManager] Found pending active signs for this type, loading them now.");
             for (String filePath : pendingActiveSigns.remove(name)) {
@@ -301,6 +316,12 @@ public class GgSignManager implements Listener, SignManager {
             }
         }
         return true;
+    }
+
+    @Override
+    public GameSignType getSignType(@NonNull String shortName) {
+        String typeClazz = typeToShortNameIndex.get(shortName.toLowerCase());
+        return typeClazz == null ? null : registeredSignTypes.get(typeClazz);
     }
 
     @Override
@@ -387,6 +408,59 @@ public class GgSignManager implements Listener, SignManager {
             signBlock.setLine(i + 1, ChatColor.translateAlternateColorCodes('&', newLines.get(i)));
         }
         signBlock.update();
+    }
+
+    /**
+     * Returns the loaded active signs for a game.
+     *
+     * @param game The game to get the signs of.
+     * @return Collection of signs.
+     */
+    public Collection<ActiveGameSign> getActiveSigns(@NonNull Game game) {
+        Set<ActiveGameSign> signs = new LinkedHashSet<>();
+        Set<BlockLocation> locations = gameActiveSigns.get(game.getClass().getCanonicalName());
+        if (locations != null && !locations.isEmpty()) {
+            for (BlockLocation loc : locations) {
+                signs.add(activeSigns.get(loc));
+            }
+        }
+        return signs;
+    }
+
+    /**
+     * Returns a read-only view of all of the registered sign types.
+     *
+     * @return Read-only collection of registered sign types.
+     */
+    public Collection<GameSignType> getRegisteredTypes() {
+        return Collections.unmodifiableCollection(registeredSignTypes.values());
+    }
+
+    public String getShortName(@NonNull GameSignType type) {
+        return typeToShortNameIndex.get(type.getClass().getCanonicalName());
+    }
+
+    /**
+     * Creates a sign.
+     *
+     * @param block Block that the sign will exist as.
+     * @param type The type of sign to create.
+     * @param game The game the sign exists for.
+     * @return True if successful.
+     *         False if unable to create.
+     * @throws java.lang.IllegalArgumentException Thrown if the block is not a sign.
+     */
+    public boolean createSign(@NonNull Block block, @NonNull GameSignType type, @NonNull String gameRef, @NonNull GameInstance game) {
+        if (block.getType() != Material.SIGN_POST || block.getType() != Material.WALL_SIGN)
+            throw new IllegalArgumentException("Block is not a sign.");
+
+        BlockLocation location = new BlockLocation(block.getLocation());
+        YamlFileManager file = new YamlFileManager(activeSignsDir + File.separator + location.toString() + ".yml");
+        FileConfiguration config = file.getConfig();
+        config.set("type", type.getClass().getCanonicalName());
+        config.set("game", gameRef);
+        config.set("location", location);
+        return loadActiveSign(file.getFile());
     }
 
     /**
