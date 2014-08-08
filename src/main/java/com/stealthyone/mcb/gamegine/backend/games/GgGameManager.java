@@ -26,7 +26,7 @@ public class GgGameManager implements GameManager {
     @Override
     public boolean registerGame(@NonNull Game game) {
         String uniqueName = game.getClass().getCanonicalName();
-        if (registeredGames.containsKey(uniqueName)) {
+        if (registeredGames.containsKey(uniqueName) || gameNameToClassIndex.containsKey(game.getName().toLowerCase())) {
             GamegineLogger.warning("Unable to register game '" + game.getName() + "' (" + uniqueName + ") - a game with the same name was already registered!");
             return false;
         } else {
