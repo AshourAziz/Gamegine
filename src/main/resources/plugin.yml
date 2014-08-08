@@ -11,9 +11,58 @@ commands:
     aliases: [ggc, cooldowns]
   gamegine:
     aliases: [gg]
-  games:
-    aliases: []
-  points:
-    aliases: [ggpoints, gamepoints]
-  gameginesign:
-    aliases: [gsign, ggsign]
+  gameginegames:
+    aliases: [games, game, ggames, ggame]
+  gameginesigns:
+    aliases: [signs, sign, gsigns, gsign]
+permissions:
+  gamegine.admin:
+    description: 'Gives access to all admin commands.'
+    default: op
+    children:
+      gamegine.admin.signs: true
+      gamegine.reload: true
+      gamegine.save: true
+  gamegine.admin.signs:
+    description: 'Gives access to all sign permissions.'
+    default: false
+    children:
+      gamegine.signs.create: true
+      gamegine.signs.info: true
+      gamegine.signs.list: true
+      gamegine.signs.teleport: true
+      gamegine.signs.types: true
+  gamegine.player.play:
+    description: 'Gives access to the basic gameplay permissions.'
+    default: true
+    children:
+      gamegine.games.join: true
+      gamegine.games.list: true
+
+  gamegine.reload:
+    description: 'Allows a player to reload Gamegine''s configuration.'
+    default: false
+  gamegine.save:
+    description: 'Allows a player to save Gamegine''s data and configuration.'
+    default: false
+  gamegine.games.join:
+    description: 'Allows a player to use Gamegine''s join command.'
+    default: false
+  gamegine.games.list:
+    description: 'Allows a player to list all of the currently registered games.'
+    default: false
+  gamegine.signs.create:
+    description: 'Allows a player to create a Gamegine sign.'
+    default: false
+  gamegine.signs.info:
+    description: 'Allows a player to view a Gamegine sign''s info.'
+    default: false
+  gamegine.signs.list:
+    description: 'Allows a player to list registered Gamegine signs for a game.'
+    default: false
+  gamegine.signs.teleport:
+    description: 'Allows a player to teleport to a registered Gamegine sign.'
+    default: false
+  gamegine.signs.types:
+    description: 'Allows a player to view registered sign types.'
+    default: false

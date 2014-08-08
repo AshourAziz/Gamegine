@@ -92,8 +92,8 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
 
         GamegineLogger.debug("Registering commands...");
         getCommand("gamegine").setExecutor(new CmdGamegine(this));
-        getCommand("games").setExecutor(new CmdGames(this));
-        getCommand("gameginesign").setExecutor(new CmdSign(this));
+        getCommand("gameginegames").setExecutor(new CmdGames(this));
+        getCommand("gameginesigns").setExecutor(new CmdSign(this));
 
         GamegineLogger.info(String.format("Gamegine v%s by Stealth2800 successfully ENABLED.", getVersion()));
     }
