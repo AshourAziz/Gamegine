@@ -39,7 +39,6 @@ public class GgSignManager implements Listener, SignManager {
     private final GameginePlugin plugin;
 
     /* Configuration. */
-    private boolean inSignsEnabled;
     private InSignsListener inSignsListener;
 
     private List<String> gameNotFoundFormat;
@@ -52,8 +51,7 @@ public class GgSignManager implements Listener, SignManager {
     private YamlFileManager signTypesFile;
 
     private Map<String, GameSignType> registeredSignTypes = new HashMap<>();
-    private Map<String, String> typeToShortNameIndex = new HashMap<>();
-    private Map<String, String> shortNameToTypeIndex = new HashMap<>();
+    private Map<String, String> typeShortNameIndex = new HashMap<>(); // Short name, Type
     private Map<String, List<String>> configuredFormats = new HashMap<>();
 
     /* Loaded signs. */
@@ -213,7 +211,7 @@ public class GgSignManager implements Listener, SignManager {
             inSignsListener = null;
         }
 
-        inSignsEnabled = plugin.getConfig().getBoolean("Signs.Enable InSigns", true);
+        boolean inSignsEnabled = plugin.getConfig().getBoolean("Signs.Enable InSigns", true);
         if (inSignsEnabled && !plugin.getHookManager().isEnabled(HookInSigns.class)) {
             inSignsEnabled = false;
             GamegineLogger.info("[SignManager] InSigns is enabled in the config but not installed on the server!");
@@ -302,11 +300,10 @@ public class GgSignManager implements Listener, SignManager {
             GamegineLogger.debug("No short name set for sign type '" + name + "' - will not attempt to register.");
         } else if (shortName.contains(" ")) {
             GamegineLogger.warning("Unable to register short name for sign type '" + name + "' - name is invalid (contains spaces).");
-        } else if (typeToShortNameIndex.containsKey(shortName.toLowerCase())) {
+        } else if (typeShortNameIndex.containsKey(shortName.toLowerCase())) {
             GamegineLogger.warning("Unable to register short name for sign type '" + name + "' - already registered.");
         } else {
-            typeToShortNameIndex.put(shortName.toLowerCase(), name);
-            shortNameToTypeIndex.put(name, shortName);
+            typeShortNameIndex.put(shortName.toLowerCase(), name);
             GamegineLogger.info("Registered short name '" + shortName + "' for sign type '" + name + "'.");
         }
 
@@ -321,7 +318,7 @@ public class GgSignManager implements Listener, SignManager {
 
     @Override
     public GameSignType getSignType(@NonNull String shortName) {
-        String typeClazz = typeToShortNameIndex.get(shortName.toLowerCase());
+        String typeClazz = typeShortNameIndex.get(shortName.toLowerCase());
         return typeClazz == null ? null : registeredSignTypes.get(typeClazz);
     }
 
@@ -437,10 +434,6 @@ public class GgSignManager implements Listener, SignManager {
      */
     public Collection<GameSignType> getRegisteredTypes() {
         return Collections.unmodifiableCollection(registeredSignTypes.values());
-    }
-
-    public String getShortName(@NonNull GameSignType type) {
-        return typeToShortNameIndex.get(type.getClass().getCanonicalName());
     }
 
     /**

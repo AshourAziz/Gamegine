@@ -344,7 +344,7 @@ public class CmdSign implements CommandExecutor {
                 break;
             }
 
-            String shortName = signManager.getShortName(type);
+            String shortName = type.getShortName();
             String rawName = ChatColor.RED + type.getClass().getCanonicalName();
             messages.add(TYPE_ELEMENT
                     .replace("{NUM}", Integer.toString(index + 1))
