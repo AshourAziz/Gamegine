@@ -52,7 +52,7 @@ public class GgSignManager implements Listener, SignManager {
 
     private Map<String, GameSignType> registeredSignTypes = new HashMap<>();
     private Map<String, String> typeShortNameIndex = new HashMap<>(); // Short name, Type
-    private Map<String, List<String>> configuredFormats = new HashMap<>();
+    private Map<String, List<String>> signTypeFormats = new HashMap<>();
 
     /* Loaded signs. */
     private File activeSignsDir;
@@ -225,19 +225,44 @@ public class GgSignManager implements Listener, SignManager {
         }
 
         FileConfiguration typeConfig = signTypesFile.getConfig();
-        configuredFormats.clear();
+        signTypeFormats.clear();
         for (GameSignType signType : registeredSignTypes.values()) {
-            String typeName = signType.getClass().getCanonicalName();
-            if (signType.isFormatConfigurable()) {
-                List<String> list = typeConfig.getStringList(typeName + ".format");
-                if (list != null) {
-                    if (list.size() != 4) {
-                        GamegineLogger.warning("[SignManager] Unable to load custom sign type format for '" + typeName + "' - the format in signTypes.yml does not have 4 lines defined.");
-                    } else {
-                        configuredFormats.put(typeName, list);
-                        GamegineLogger.info("[SignManager] Loaded custom sign type format for '" + typeName + "'");
-                    }
+            try {
+                loadSignTypeFormat(signType);
+            } catch (Exception ex) {
+                GamegineLogger.warning("[SignManager] " + ex.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Attempts to load a sign type's format.
+     *
+     * @param signType Type to load format for.
+     */
+    private void loadSignTypeFormat(GameSignType signType) {
+        String name = signType.getClass().getCanonicalName();
+        if (signType.isFormatConfigurable()) {
+            // If the type allows the lines to be configured, attempt to load from the file first.
+            List<String> list = signTypesFile.getConfig().getStringList(name + ".format");
+
+            if (!list.isEmpty()) {
+                if (list.size() != 4) {
+                    GamegineLogger.warning("[SignManager] Unable to load custom sign type format for '" + name + "' - the format in signTypes.yml does not have 4 lines defined.  Attempting to use default.");
+                } else {
+                    signTypeFormats.put(name, Collections.unmodifiableList(list));
+                    GamegineLogger.info("[SignManager] Loaded custom sign type format for '" + name + "'");
                 }
+            }
+        }
+
+        if (!signTypeFormats.containsKey(name)) {
+            if (signType.getDefaultFormat() == null || signType.getDefaultFormat().isEmpty()) {
+                throw new IllegalArgumentException("Unable to register sign type '" + name + "' - it does not have a format!");
+            } else if (signType.getDefaultFormat().size() != 4) {
+                throw new IllegalArgumentException("Unable to register sign type '" + name + "' - it does not have a valid format!");
+            } else {
+                signTypeFormats.put(name, signType.getDefaultFormat());
             }
         }
     }
@@ -288,16 +313,16 @@ public class GgSignManager implements Listener, SignManager {
         String name = signType.getClass().getCanonicalName();
         if (registeredSignTypes.containsKey(name)) return false;
 
-        if (signType.getDefaultFormat() == null || signType.getDefaultFormat().size() != 4) {
-            throw new IllegalArgumentException("Sign type '" + name + "' does not have a valid format.");
-        }
+        //TODO: Add list of signs that failed to register because of this reason and attempt to load them on reload.
+        loadSignTypeFormat(signType);
 
         registeredSignTypes.put(name, signType);
         GamegineLogger.info("[SignManager] Registered sign type '" + name + "'");
 
+        // Register short name (optional).
         String shortName = signType.getShortName();
         if (shortName == null || shortName.isEmpty()) {
-            GamegineLogger.debug("No short name set for sign type '" + name + "' - will not attempt to register.");
+            GamegineLogger.debug("No short name set for sign type '" + name + "' - will not attempt to register it.");
         } else if (shortName.contains(" ")) {
             GamegineLogger.warning("Unable to register short name for sign type '" + name + "' - name is invalid (contains spaces).");
         } else if (typeShortNameIndex.containsKey(shortName.toLowerCase())) {
@@ -359,7 +384,7 @@ public class GgSignManager implements Listener, SignManager {
      */
     private List<String> getSignFormat(@NonNull GameSignType type) {
         String typeName = type.getClass().getCanonicalName();
-        return configuredFormats.containsKey(typeName) ? configuredFormats.get(typeName) : type.getDefaultFormat();
+        return signTypeFormats.containsKey(typeName) ? signTypeFormats.get(typeName) : type.getDefaultFormat();
     }
 
     /**
