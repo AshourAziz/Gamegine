@@ -204,15 +204,18 @@ public class GgPlayerManager implements PlayerManager {
     public Collection<Player> getGamePlayers(@NonNull GameInstance gameInstance) {
         GgGameManager.validateGameInstance(gameInstance);
 
-        Set<Player> players = new HashSet<>();
+
         Game game = gameInstance.getOwner();
         String ref = game.getClass().getCanonicalName() + ":" + ((InstanceGame) game).getId(gameInstance);
         if (gameInstancePlayers.containsKey(ref)) {
+            Set<Player> players = new HashSet<>();
             for (UUID uuid : gameInstancePlayers.get(ref)) {
                 players.add(Bukkit.getPlayer(uuid));
             }
+            return players;
+        } else {
+            return getGamePlayers(game);
         }
-        return players;
     }
 
     public void playerDisconnect(@NonNull Player player) {
