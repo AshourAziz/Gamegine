@@ -40,7 +40,7 @@ usages:
   gamegine_help: '&cType /&4{LABEL} help &cfor help.'
   games_help: '&cType &4/{LABEL} help &cfor help.'
   games_join: '{TAG}/{LABEL} join <game name>'
-  signs_create: '{TAG}/{LABEL} create <type short name OR ID> <game name>[:ID of the instance]'
+  signs_create: '{TAG}/{LABEL} create <type short name OR ID> <game name>[:ID of the instance] [args]'
   signs_list: '{TAG}/{LABEL} list <game name> [page]'
   signs_tp: '{TAG}/{LABEL} tp <game name> <sign number>'
 plugin:

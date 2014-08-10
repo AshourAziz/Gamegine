@@ -8,12 +8,20 @@ import com.stealthyone.mcb.gamegine.api.signs.ActiveGSign;
 import com.stealthyone.mcb.gamegine.api.signs.GSignType;
 import com.stealthyone.mcb.gamegine.api.signs.SignManager;
 import com.stealthyone.mcb.gamegine.api.signs.modules.GSignInteractModule;
+import com.stealthyone.mcb.gamegine.api.signs.modules.GSignReloadModule;
 import com.stealthyone.mcb.gamegine.api.signs.variables.SignVariable;
+import com.stealthyone.mcb.gamegine.backend.signs.types.GameJoinSign;
+import com.stealthyone.mcb.gamegine.backend.signs.variables.SignGameIDVar;
+import com.stealthyone.mcb.gamegine.backend.signs.variables.SignGameNameVar;
+import com.stealthyone.mcb.gamegine.backend.signs.variables.SignPlayerCountVar;
+import com.stealthyone.mcb.gamegine.backend.signs.variables.SignPlayersVar;
 import com.stealthyone.mcb.gamegine.lib.games.InstanceGame;
 import com.stealthyone.mcb.gamegine.lib.games.instances.GameInstance;
 import com.stealthyone.mcb.gamegine.utils.BlockLocation;
 import com.stealthyone.mcb.stbukkitlib.storage.YamlFileManager;
+import com.stealthyone.mcb.stbukkitlib.utils.ConfigUtils;
 import de.blablubbabc.insigns.SignSendEvent;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
@@ -22,6 +30,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -30,6 +39,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.io.File;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 @RequiredArgsConstructor
@@ -49,6 +59,7 @@ public class GgSignManager implements Listener, SignManager {
     private Map<String, String> variableKeys = new HashMap<>();
 
     /* Sign types. */
+    @Getter
     private YamlFileManager signTypesFile;
 
     private Map<String, GSignType> registeredSignTypes = new HashMap<>();
@@ -62,6 +73,18 @@ public class GgSignManager implements Listener, SignManager {
 
     private Set<BlockLocation> pendingActiveSignLocations = new HashSet<>();
     private Map<String, Set<String>> pendingActiveSigns = new HashMap<>(); // Type name, list of file names.
+
+    /**
+     * Registers defaults.
+     */
+    public void loadDefaults() {
+        registerVariable(new SignGameNameVar());
+        registerVariable(new SignGameIDVar());
+        registerVariable(new SignPlayersVar());
+        registerVariable(new SignPlayerCountVar());
+
+        registerSignType(new GameJoinSign(ConfigUtils.getSection(signTypesFile.getConfig(), "join")));
+    }
 
     /**
      * Load sign manager data.
@@ -191,8 +214,16 @@ public class GgSignManager implements Listener, SignManager {
      * Reload the sign manager's configuration.
      */
     public void reload() {
+        // Reload sign types.
         signTypesFile.reloadConfig();
 
+        for (GSignType type : registeredSignTypes.values()) {
+            if (type instanceof GSignReloadModule) {
+                ((GSignReloadModule) type).reload();
+            }
+        }
+
+        // Reload plugin configuration.
         FileConfiguration pConfig = plugin.getConfig();
 
         gameNotFoundFormat = pConfig.getStringList("Signs.Formats.Game not found");
@@ -289,8 +320,11 @@ public class GgSignManager implements Listener, SignManager {
 
         if (registeredSignTypes.containsKey(name)) {
             GamegineLogger.info("[SignManager] Found pending active signs for this type, loading them now.");
-            for (String filePath : pendingActiveSigns.remove(name)) {
-                loadActiveSign(new File(filePath));
+            Set<String> pendingFiles = pendingActiveSigns.remove(name);
+            if (pendingFiles != null) {
+                for (String filePath : pendingFiles) {
+                    loadActiveSign(new File(filePath));
+                }
             }
         }
         return true;
@@ -405,11 +439,13 @@ public class GgSignManager implements Listener, SignManager {
      * @param block Block that the sign will exist as.
      * @param type The type of sign to create.
      * @param game The game the sign exists for.
-     * @return True if successful.
+     * @param extraData Extra data that the sign needs.<br />
+     *                  Can be null if there are no args.
+     * @return True if successful.<br />
      *         False if unable to create.
      * @throws java.lang.IllegalArgumentException Thrown if the block is not a sign.
      */
-    public boolean createSign(@NonNull Block block, @NonNull GSignType type, @NonNull String gameRef, @NonNull GameInstance game) {
+    public boolean createSign(@NonNull Block block, @NonNull GSignType type, @NonNull String gameRef, @NonNull GameInstance game, Map<String, Object> extraData) {
         if (block.getType() != Material.SIGN_POST || block.getType() != Material.WALL_SIGN)
             throw new IllegalArgumentException("Block is not a sign.");
 
@@ -419,6 +455,12 @@ public class GgSignManager implements Listener, SignManager {
         config.set("type", type.getClass().getCanonicalName());
         config.set("game", gameRef);
         config.set("location", location);
+        if (extraData != null && !extraData.isEmpty()) {
+            ConfigurationSection dataSec = config.createSection("extraData");
+            for (Entry<String, Object> entry : extraData.entrySet()) {
+                dataSec.set(entry.getKey(), entry.getValue());
+            }
+        }
         return loadActiveSign(file.getFile());
     }
 

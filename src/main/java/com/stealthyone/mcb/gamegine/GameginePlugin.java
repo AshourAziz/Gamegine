@@ -10,10 +10,6 @@ import com.stealthyone.mcb.gamegine.backend.arenas.GgArenaManager;
 import com.stealthyone.mcb.gamegine.backend.games.GgGameManager;
 import com.stealthyone.mcb.gamegine.backend.hooks.GgHookManager;
 import com.stealthyone.mcb.gamegine.backend.signs.GgSignManager;
-import com.stealthyone.mcb.gamegine.backend.signs.variables.SignGameIDVar;
-import com.stealthyone.mcb.gamegine.backend.signs.variables.SignGameNameVar;
-import com.stealthyone.mcb.gamegine.backend.signs.variables.SignPlayerCountVar;
-import com.stealthyone.mcb.gamegine.backend.signs.variables.SignPlayersVar;
 import com.stealthyone.mcb.gamegine.commands.CmdGamegine;
 import com.stealthyone.mcb.gamegine.commands.CmdGames;
 import com.stealthyone.mcb.gamegine.commands.CmdSign;
@@ -49,6 +45,9 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
     private GgPlayerManager playerManager;
     private GgSignManager signManager;
 
+    /* Commands */
+    @Getter private CmdGames cmdGames = new CmdGames(this);
+
     @Override
     public void onLoad() {
         Gamegine.setInstance(this);
@@ -83,10 +82,7 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
         signManager.load();
 
         GamegineLogger.debug("Loading defaults...");
-        signManager.registerVariable(new SignGameNameVar());
-        signManager.registerVariable(new SignGameIDVar());
-        signManager.registerVariable(new SignPlayersVar());
-        signManager.registerVariable(new SignPlayerCountVar());
+        signManager.loadDefaults();
 
         GamegineLogger.debug("Registering listeners...");
         Bukkit.getPluginManager().registerEvents(new PlayerListener(this), this);
@@ -94,7 +90,7 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
 
         GamegineLogger.debug("Registering commands...");
         getCommand("gamegine").setExecutor(new CmdGamegine(this));
-        getCommand("gameginegames").setExecutor(new CmdGames(this));
+        getCommand("gameginegames").setExecutor(cmdGames);
         getCommand("gameginesigns").setExecutor(new CmdSign(this));
 
         GamegineLogger.info(String.format("Gamegine v%s by Stealth2800 successfully ENABLED.", getVersion()));

@@ -194,7 +194,12 @@ public class CmdSign implements CommandExecutor {
             }
         }
 
-        if (plugin.getSignManager().createSign(block, type, gameInstanceRef, instance)) {
+        List<String> signArgs = new ArrayList<>();
+        if (args.length > 3) {
+            signArgs.addAll(Arrays.asList(args).subList(3, args.length));
+        }
+
+        if (plugin.getSignManager().createSign(block, type, gameInstanceRef, instance, new QuickMap<String, Object>("args", signArgs.toArray(new String[signArgs.size()])).build())) {
             plugin.getMessageManager().getMessage("notices.signs_created").sendTo(sender);
         } else {
             plugin.getMessageManager().getMessage("errors.signs_unable_to_create").sendTo(sender);
