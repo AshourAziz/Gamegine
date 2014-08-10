@@ -6,6 +6,7 @@ import org.bukkit.command.CommandSender;
 public enum PermissionNode {
 
     GAMES_JOIN,
+    GAMES_LEAVE,
     GAMES_LIST,
     SIGNS_CREATE,
     SIGNS_INFO,

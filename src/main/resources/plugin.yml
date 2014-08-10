@@ -37,6 +37,7 @@ permissions:
     default: true
     children:
       gamegine.games.join: true
+      gamegine.games.leave: true
       gamegine.games.list: true
 
   gamegine.reload:
@@ -47,6 +48,9 @@ permissions:
     default: false
   gamegine.games.join:
     description: 'Allows a player to use Gamegine''s join command.'
+    default: false
+  gamegine.games.leave:
+    description: 'Allows a player to use Gamegine''s leave command.'
     default: false
   gamegine.games.list:
     description: 'Allows a player to list all of the currently registered games.'

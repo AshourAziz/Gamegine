@@ -29,13 +29,19 @@ public class GameJoinSign extends GgYamlGSign implements GSignInteractModule {
         GameInstance game = sign.getGame();
         if (!(game.getOwner() instanceof GameJoinModule)) {
             ((GameginePlugin) Gamegine.getInstance()).getMessageManager().getMessage("errors.game_not_joinable").sendTo(e.getPlayer());
+            return;
+        }
+
+        if (e.getPlayer().isSneaking()) {
+            ((GameginePlugin) Gamegine.getInstance()).getCmdGames().onCommand(e.getPlayer(), null, "games", new String[]{ "leave" });
         } else {
-            ((GameginePlugin) Gamegine.getInstance()).getCmdGames().onCommand(e.getPlayer(), null, "join", createArgs(sign));
+            ((GameginePlugin) Gamegine.getInstance()).getCmdGames().onCommand(e.getPlayer(), null, "games", createArgs(sign, "join"));
         }
     }
 
-    private String[] createArgs(ActiveGSign sign) {
+    private String[] createArgs(ActiveGSign sign, String firstArg) {
         List<String> args = new ArrayList<>();
+        args.add(firstArg);
         args.add(sign.getGameInstanceRef());
         Object obj = sign.getExtraData().get("args");
         if (obj != null) {

@@ -4,6 +4,7 @@ import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.games.Game;
 import com.stealthyone.mcb.gamegine.api.games.GamePlayerAddException;
 import com.stealthyone.mcb.gamegine.api.games.modules.GameJoinModule;
+import com.stealthyone.mcb.gamegine.api.games.modules.GameLeaveModule;
 import com.stealthyone.mcb.gamegine.messages.Messages.ErrorMessages;
 import com.stealthyone.mcb.gamegine.messages.Messages.PluginMessages;
 import com.stealthyone.mcb.gamegine.messages.Messages.UsageMessages;
@@ -38,6 +39,11 @@ public class CmdGames implements CommandExecutor {
                 /* Join a registered game. */
                 case "join":
                     cmdJoin(sender, label, args);
+                    return true;
+
+                /* Leave joined game. */
+                case "leave":
+                    cmdLeave(sender, label, args);
                     return true;
 
                 /* List registered games */
@@ -96,6 +102,28 @@ public class CmdGames implements CommandExecutor {
                         + logWarning);
             }
         }
+    }
+
+    /*
+     * Leave a joined game.
+     */
+    private void cmdLeave(CommandSender sender, String label, String[] args) {
+        if (!CommandUtils.performBasicChecks(plugin, sender, PermissionNode.GAMES_LEAVE, true)) return;
+
+        Game game = plugin.getPlayerManager().getGame((Player) sender);
+        if (game == null) {
+            plugin.getMessageManager().getMessage("errors.not_in_game").sendTo(sender);
+            return;
+        }
+
+        if (!(game instanceof GameLeaveModule)) {
+            plugin.getMessageManager().getMessage("errors.game_cannot_leave");
+            return;
+        }
+
+        ((GameLeaveModule) game).removePlayer((Player) sender);
+        //temporary, messages will be handled differently later
+        sender.sendMessage(((GameLeaveModule) game).getLeaveMessage((Player) sender));
     }
 
     /*
