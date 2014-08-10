@@ -10,6 +10,7 @@ errors:
   cooldowns_system_disabled: '&cCooldowns are disabled on this server.'
   game_cannot_join: '&cYou cannot join this game: {REASON}'
   game_not_found: '&cUnable to find game: ''&6{NAME}&c''.'
+  game_not_joinable: '&cThis game is not joinable.'
   item_must_be_int: '&c{ITEM} must be an integer.'
   must_be_player: '&cYou must be a player to do this.'
   must_look_at_sign: '&cYou must be looking at a sign.'

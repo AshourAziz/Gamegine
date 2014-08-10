@@ -4,9 +4,10 @@ import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.games.Game;
 import com.stealthyone.mcb.gamegine.api.hooks.plugins.defaults.HookInSigns;
 import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
-import com.stealthyone.mcb.gamegine.api.signs.ActiveGameSign;
-import com.stealthyone.mcb.gamegine.api.signs.GameSignType;
+import com.stealthyone.mcb.gamegine.api.signs.ActiveGSign;
+import com.stealthyone.mcb.gamegine.api.signs.GSignType;
 import com.stealthyone.mcb.gamegine.api.signs.SignManager;
+import com.stealthyone.mcb.gamegine.api.signs.modules.GSignInteractModule;
 import com.stealthyone.mcb.gamegine.api.signs.variables.SignVariable;
 import com.stealthyone.mcb.gamegine.lib.games.InstanceGame;
 import com.stealthyone.mcb.gamegine.lib.games.instances.GameInstance;
@@ -50,14 +51,13 @@ public class GgSignManager implements Listener, SignManager {
     /* Sign types. */
     private YamlFileManager signTypesFile;
 
-    private Map<String, GameSignType> registeredSignTypes = new HashMap<>();
+    private Map<String, GSignType> registeredSignTypes = new HashMap<>();
     private Map<String, String> typeShortNameIndex = new HashMap<>(); // Short name, Type
-    private Map<String, List<String>> signTypeFormats = new HashMap<>();
 
     /* Loaded signs. */
     private File activeSignsDir;
 
-    private Map<BlockLocation, ActiveGameSign> activeSigns = new HashMap<>();
+    private Map<BlockLocation, ActiveGSign> activeSigns = new HashMap<>();
     private Map<String, Set<BlockLocation>> gameActiveSigns = new HashMap<>();
 
     private Set<BlockLocation> pendingActiveSignLocations = new HashSet<>();
@@ -131,8 +131,8 @@ public class GgSignManager implements Listener, SignManager {
             return false;
         }
 
-        GameSignType type = registeredSignTypes.get(typeName);
-        ActiveGameSign activeGameSign = new ActiveGameSign(type, yamlFile);
+        GSignType type = registeredSignTypes.get(typeName);
+        ActiveGSign activeGameSign = new ActiveGSign(type, yamlFile);
         try {
             activeGameSign.getGame();
         } catch (IllegalArgumentException ex) {
@@ -174,7 +174,7 @@ public class GgSignManager implements Listener, SignManager {
      *
      * @param sign Sign to unload and delete.
      */
-    private void deleteActiveSign(ActiveGameSign sign) {
+    private void deleteActiveSign(ActiveGSign sign) {
         BlockLocation location = sign.getLocation();
         if (location == null) return;
 
@@ -223,58 +223,16 @@ public class GgSignManager implements Listener, SignManager {
         } else {
             GamegineLogger.info("[SignManager] InSigns support disabled.");
         }
-
-        FileConfiguration typeConfig = signTypesFile.getConfig();
-        signTypeFormats.clear();
-        for (GameSignType signType : registeredSignTypes.values()) {
-            try {
-                loadSignTypeFormat(signType);
-            } catch (Exception ex) {
-                GamegineLogger.warning("[SignManager] " + ex.getMessage());
-            }
-        }
     }
 
     /**
-     * Attempts to load a sign type's format.
-     *
-     * @param signType Type to load format for.
-     */
-    private void loadSignTypeFormat(GameSignType signType) {
-        String name = signType.getClass().getCanonicalName();
-        if (signType.isFormatConfigurable()) {
-            // If the type allows the lines to be configured, attempt to load from the file first.
-            List<String> list = signTypesFile.getConfig().getStringList(name + ".format");
-
-            if (!list.isEmpty()) {
-                if (list.size() != 4) {
-                    GamegineLogger.warning("[SignManager] Unable to load custom sign type format for '" + name + "' - the format in signTypes.yml does not have 4 lines defined.  Attempting to use default.");
-                } else {
-                    signTypeFormats.put(name, Collections.unmodifiableList(list));
-                    GamegineLogger.info("[SignManager] Loaded custom sign type format for '" + name + "'");
-                }
-            }
-        }
-
-        if (!signTypeFormats.containsKey(name)) {
-            if (signType.getDefaultFormat() == null || signType.getDefaultFormat().isEmpty()) {
-                throw new IllegalArgumentException("Unable to register sign type '" + name + "' - it does not have a format!");
-            } else if (signType.getDefaultFormat().size() != 4) {
-                throw new IllegalArgumentException("Unable to register sign type '" + name + "' - it does not have a valid format!");
-            } else {
-                signTypeFormats.put(name, signType.getDefaultFormat());
-            }
-        }
-    }
-
-    /**
-     * Checks to see if an {@link com.stealthyone.mcb.gamegine.api.signs.ActiveGameSign} object's block is actually a sign or not.
+     * Checks to see if an {@link com.stealthyone.mcb.gamegine.api.signs.ActiveGSign} object's block is actually a sign or not.
      *
      * @param sign Sign to check.
      * @return True if the block is a sign.
      *         False if the block is not a sign.
      */
-    private boolean validateActiveSignBlock(ActiveGameSign sign) {
+    private boolean validateActiveSignBlock(ActiveGSign sign) {
         Block block = sign.getLocation().getBlock();
         boolean result = validateSignBlock(block);
         if (!result) {
@@ -309,12 +267,9 @@ public class GgSignManager implements Listener, SignManager {
     }
 
     @Override
-    public boolean registerSignType(@NonNull GameSignType signType) {
+    public boolean registerSignType(@NonNull GSignType signType) {
         String name = signType.getClass().getCanonicalName();
         if (registeredSignTypes.containsKey(name)) return false;
-
-        //TODO: Add list of signs that failed to register because of this reason and attempt to load them on reload.
-        loadSignTypeFormat(signType);
 
         registeredSignTypes.put(name, signType);
         GamegineLogger.info("[SignManager] Registered sign type '" + name + "'");
@@ -342,13 +297,13 @@ public class GgSignManager implements Listener, SignManager {
     }
 
     @Override
-    public GameSignType getSignType(@NonNull String shortName) {
+    public GSignType getSignType(@NonNull String shortName) {
         String typeClazz = typeShortNameIndex.get(shortName.toLowerCase());
         return typeClazz == null ? null : registeredSignTypes.get(typeClazz);
     }
 
     @Override
-    public ActiveGameSign getSign(@NonNull Location location) {
+    public ActiveGSign getSign(@NonNull Location location) {
         return activeSigns.get(new BlockLocation(location));
     }
 
@@ -359,32 +314,11 @@ public class GgSignManager implements Listener, SignManager {
             return;
         }
 
-        ActiveGameSign gameSign = plugin.getSignManager().getSign(block.getLocation());
-        if (gameSign != null) {
-            switch (e.getAction()) {
-                case RIGHT_CLICK_BLOCK:
-                    gameSign.handleRightClick(e.getPlayer());
-                    return;
-
-                case LEFT_CLICK_BLOCK:
-                    gameSign.handleLeftClick(e.getPlayer());
-                    return;
-
-                default:
-                    e.getPlayer().sendMessage(ChatColor.RED + "An unknown error occurred, contact an administrator.");
-            }
+        ActiveGSign gameSign = plugin.getSignManager().getSign(block.getLocation());
+        if (gameSign != null && gameSign.getType() instanceof GSignInteractModule) {
+            e.setCancelled(true);
+            ((GSignInteractModule) gameSign.getType()).playerInteract(e, gameSign);
         }
-    }
-
-    /**
-     * Returns the current format of a sign type.
-     *
-     * @param type Type to get format of.
-     * @return List of strings that represent the format.
-     */
-    private List<String> getSignFormat(@NonNull GameSignType type) {
-        String typeName = type.getClass().getCanonicalName();
-        return signTypeFormats.containsKey(typeName) ? signTypeFormats.get(typeName) : type.getDefaultFormat();
     }
 
     /**
@@ -392,17 +326,19 @@ public class GgSignManager implements Listener, SignManager {
      *
      * @param sign Sign to update.
      */
-    public void updateSign(ActiveGameSign sign) {
+    public void updateSign(ActiveGSign sign) {
         if (!validateActiveSignBlock(sign)) return;
 
         Sign signBlock = (Sign) sign.getLocation().getBlock().getState();
-        List<String> newLines = new ArrayList<>(getSignFormat(sign.getType()));
+        List<String> newLines;
 
         GameInstance gameInstance;
         try {
             gameInstance = sign.getGame();
+            newLines = new ArrayList<>(sign.getType().getLines(sign));
         } catch (IllegalStateException ex) {
             // Game not loaded.
+            newLines = new ArrayList<>();
 
             String[] gameClassSplit = sign.getGameInstanceRef().split(":")[0].split("\\.");
             String gameName = gameClassSplit[gameClassSplit.length - 1];
@@ -413,14 +349,16 @@ public class GgSignManager implements Listener, SignManager {
             return;
         }
 
-        for (SignVariable var : registeredVariables.values()) {
-            String varName = var.getClass().getCanonicalName();
-            String replacement = var.getReplacement(gameInstance);
+        if (gameInstance != null && sign.getType().useSignVariables()) {
+            for (SignVariable var : registeredVariables.values()) {
+                String varName = var.getClass().getCanonicalName();
+                String replacement = var.getReplacement(gameInstance);
 
-            for (int i = 0; i < 4; i++) {
-                String string = newLines.get(i);
-                if (string != null) {
-                    newLines.set(i, string.replace(varName, replacement));
+                for (int i = 0; i < 4; i++) {
+                    String string = newLines.get(i);
+                    if (string != null) {
+                        newLines.set(i, string.replace(varName, replacement));
+                    }
                 }
             }
         }
@@ -440,9 +378,9 @@ public class GgSignManager implements Listener, SignManager {
      * @return Collection of signs.
      * @throws java.lang.IllegalArgumentException if the Game is not an instance of {@link com.stealthyone.mcb.gamegine.lib.games.InstanceGame}
      */
-    public Collection<ActiveGameSign> getActiveSigns(@NonNull Game game) {
+    public Collection<ActiveGSign> getActiveSigns(@NonNull Game game) {
         if (!(game instanceof InstanceGame)) throw new IllegalArgumentException("Game cannot have signs - not an instance of InstanceGame.");
-        Set<ActiveGameSign> signs = new LinkedHashSet<>();
+        Set<ActiveGSign> signs = new LinkedHashSet<>();
         Set<BlockLocation> locations = gameActiveSigns.get(game.getClass().getCanonicalName());
         if (locations != null && !locations.isEmpty()) {
             for (BlockLocation loc : locations) {
@@ -457,7 +395,7 @@ public class GgSignManager implements Listener, SignManager {
      *
      * @return Read-only collection of registered sign types.
      */
-    public Collection<GameSignType> getRegisteredTypes() {
+    public Collection<GSignType> getRegisteredTypes() {
         return Collections.unmodifiableCollection(registeredSignTypes.values());
     }
 
@@ -471,7 +409,7 @@ public class GgSignManager implements Listener, SignManager {
      *         False if unable to create.
      * @throws java.lang.IllegalArgumentException Thrown if the block is not a sign.
      */
-    public boolean createSign(@NonNull Block block, @NonNull GameSignType type, @NonNull String gameRef, @NonNull GameInstance game) {
+    public boolean createSign(@NonNull Block block, @NonNull GSignType type, @NonNull String gameRef, @NonNull GameInstance game) {
         if (block.getType() != Material.SIGN_POST || block.getType() != Material.WALL_SIGN)
             throw new IllegalArgumentException("Block is not a sign.");
 
@@ -492,7 +430,7 @@ public class GgSignManager implements Listener, SignManager {
         @EventHandler
         public void onSignSend(SignSendEvent e) {
             BlockLocation loc = new BlockLocation(e.getLocation());
-            ActiveGameSign sign = activeSigns.get(loc);
+            ActiveGSign sign = activeSigns.get(loc);
             if (sign != null) {
                 List<String> newLines = getLines(sign, e.getPlayer());
 
@@ -504,14 +442,16 @@ public class GgSignManager implements Listener, SignManager {
             }
         }
 
-        private List<String> getLines(ActiveGameSign sign, Player p) {
-            List<String> newLines = new ArrayList<>(getSignFormat(sign.getType()));
+        private List<String> getLines(ActiveGSign sign, Player p) {
+            List<String> newLines;
 
             GameInstance gameInstance;
             try {
                 gameInstance = sign.getGame();
+                newLines = new ArrayList<>(sign.getType().getLines(sign));
             } catch (IllegalStateException ex) {
                 // Game not loaded.
+                newLines = new ArrayList<>();
 
                 String[] gameClassSplit = sign.getGameInstanceRef().split(":")[0].split("\\.");
                 String gameName = gameClassSplit[gameClassSplit.length - 1];
@@ -522,14 +462,16 @@ public class GgSignManager implements Listener, SignManager {
                 return newLines;
             }
 
-            for (SignVariable var : registeredVariables.values()) {
-                String varName = var.getClass().getCanonicalName();
-                String replacement = var.getReplacement(gameInstance);
+            if (gameInstance != null && sign.getType().useSignVariables()) {
+                for (SignVariable var : registeredVariables.values()) {
+                    String varName = var.getClass().getCanonicalName();
+                    String replacement = var.getReplacement(gameInstance);
 
-                for (int i = 0; i < 4; i++) {
-                    String string = newLines.get(i);
-                    if (string != null) {
-                        newLines.set(i, string.replace(varName, replacement));
+                    for (int i = 0; i < 4; i++) {
+                        String string = newLines.get(i);
+                        if (string != null) {
+                            newLines.set(i, string.replace(varName, replacement));
+                        }
                     }
                 }
             }

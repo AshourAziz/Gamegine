@@ -2,8 +2,8 @@ package com.stealthyone.mcb.gamegine.commands;
 
 import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.games.Game;
-import com.stealthyone.mcb.gamegine.api.signs.ActiveGameSign;
-import com.stealthyone.mcb.gamegine.api.signs.GameSignType;
+import com.stealthyone.mcb.gamegine.api.signs.ActiveGSign;
+import com.stealthyone.mcb.gamegine.api.signs.GSignType;
 import com.stealthyone.mcb.gamegine.backend.signs.GgSignManager;
 import com.stealthyone.mcb.gamegine.lib.games.InstanceGame;
 import com.stealthyone.mcb.gamegine.lib.games.MultiInstanceGame;
@@ -93,11 +93,11 @@ public class CmdSign implements CommandExecutor {
     }
 
     // Utility method.
-    private List<GameSignType> getSignTypes() {
-        List<GameSignType> types = new ArrayList<>(plugin.getSignManager().getRegisteredTypes());
-        Collections.sort(types, new Comparator<GameSignType>() {
+    private List<GSignType> getSignTypes() {
+        List<GSignType> types = new ArrayList<>(plugin.getSignManager().getRegisteredTypes());
+        Collections.sort(types, new Comparator<GSignType>() {
             @Override
-            public int compare(GameSignType o1, GameSignType o2) {
+            public int compare(GSignType o1, GSignType o2) {
                 return o1.getClass().getCanonicalName().compareTo(o2.getClass().getCanonicalName());
             }
         });
@@ -105,8 +105,8 @@ public class CmdSign implements CommandExecutor {
     }
 
     // Utility method.
-    private List<ActiveGameSign> getActiveSigns(CommandSender sender, Game game) {
-        List<ActiveGameSign> signs;
+    private List<ActiveGSign> getActiveSigns(CommandSender sender, Game game) {
+        List<ActiveGSign> signs;
         try {
             signs = new ArrayList<>(plugin.getSignManager().getActiveSigns(game));
         } catch (IllegalArgumentException ex) {
@@ -114,9 +114,9 @@ public class CmdSign implements CommandExecutor {
             return null;
         }
 
-        Collections.sort(signs, new Comparator<ActiveGameSign>() {
+        Collections.sort(signs, new Comparator<ActiveGSign>() {
             @Override
-            public int compare(ActiveGameSign o1, ActiveGameSign o2) {
+            public int compare(ActiveGSign o1, ActiveGSign o2) {
                 return o1.getGameInstanceRef().compareTo(o2.getGameInstanceRef());
             }
         });
@@ -133,7 +133,7 @@ public class CmdSign implements CommandExecutor {
         Block block = getTargetBlock((Player) sender);
         if (block == null) return;
 
-        GameSignType type;
+        GSignType type;
         try {
             int id = Integer.parseInt(args[1]);
             type = getSignTypes().get(id);
@@ -217,7 +217,7 @@ public class CmdSign implements CommandExecutor {
         Block block = getTargetBlock((Player) sender);
         if (block == null) return;
 
-        ActiveGameSign sign = plugin.getSignManager().getSign(block.getLocation());
+        ActiveGSign sign = plugin.getSignManager().getSign(block.getLocation());
         if (sign == null) {
             plugin.getMessageManager().getMessage("errors.not_valid_sign").sendTo(sender);
             return;
@@ -254,7 +254,7 @@ public class CmdSign implements CommandExecutor {
         int page = CommandUtils.getPage(plugin, sender, args, 2);
         if (page == -1) return;
 
-        List<ActiveGameSign> signs = getActiveSigns(sender, game);
+        List<ActiveGSign> signs = getActiveSigns(sender, game);
         if (signs == null) return;
 
         List<String> messages = new ArrayList<>();
@@ -264,7 +264,7 @@ public class CmdSign implements CommandExecutor {
 
         for (int i = 0; i < 8; i++) {
             int index = i + ((page - 1) * 8);
-            ActiveGameSign cur;
+            ActiveGSign cur;
             try {
                 cur = signs.get(index);
             } catch (Exception ex) {
@@ -298,7 +298,7 @@ public class CmdSign implements CommandExecutor {
         Game game = CommandUtils.retrieveGame(plugin, sender, args[1]);
         if (game == null) return;
 
-        List<ActiveGameSign> signs = getActiveSigns(sender, game);
+        List<ActiveGSign> signs = getActiveSigns(sender, game);
         if (signs == null) return;
 
         int number;
@@ -309,7 +309,7 @@ public class CmdSign implements CommandExecutor {
             return;
         }
 
-        ActiveGameSign sign;
+        ActiveGSign sign;
         try {
             sign = signs.get(number);
         } catch (IndexOutOfBoundsException ex) {
@@ -333,11 +333,11 @@ public class CmdSign implements CommandExecutor {
         GgSignManager signManager = plugin.getSignManager();
 
         List<String> messages = new ArrayList<>();
-        List<GameSignType> types = getSignTypes();
+        List<GSignType> types = getSignTypes();
 
         for (int i = 0; i < 8; i++) {
             int index = i + ((page - 1) * 8);
-            GameSignType type;
+            GSignType type;
             try {
                 type = types.get(index);
             } catch (Exception ex) {
