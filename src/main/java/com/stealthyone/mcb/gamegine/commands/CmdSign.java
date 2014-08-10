@@ -85,7 +85,7 @@ public class CmdSign implements CommandExecutor {
             return null;
         }
 
-        if (block.getType() != Material.SIGN_POST || block.getType() != Material.WALL_SIGN) {
+        if (!(block.getType() == Material.SIGN_POST || block.getType() == Material.WALL_SIGN)) {
             plugin.getMessageManager().getMessage("errors.block_not_sign").sendTo(player);
             return null;
         }
