@@ -1,3 +1,8 @@
+game_messages:
+  join: '&9Successfully joined game: &6{GAME}&9.'
+  join_broadcast: '&6{PLAYER} &9joined the game.'
+  leave: '&cYou left the game.'
+  leave_broadcast: '&6{PLAYER} &cleft the game.'
 gamestates:
   disabled: '&4DISABLED'
   waiting: '&aWAITING'

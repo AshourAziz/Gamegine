@@ -5,6 +5,8 @@ import com.stealthyone.mcb.gamegine.api.games.Game;
 import com.stealthyone.mcb.gamegine.api.games.GamePlayerAddException;
 import com.stealthyone.mcb.gamegine.api.games.modules.GameJoinModule;
 import com.stealthyone.mcb.gamegine.api.games.modules.GameLeaveModule;
+import com.stealthyone.mcb.gamegine.api.games.modules.GameMessageModule.GameMessage;
+import com.stealthyone.mcb.gamegine.backend.games.GameMessageHelper;
 import com.stealthyone.mcb.gamegine.messages.Messages.ErrorMessages;
 import com.stealthyone.mcb.gamegine.messages.Messages.PluginMessages;
 import com.stealthyone.mcb.gamegine.messages.Messages.UsageMessages;
@@ -85,14 +87,7 @@ public class CmdGames implements CommandExecutor {
                 joinableGame.addPlayer((Player) sender);
             }
 
-            String msg = joinableGame.getJoinMessage((Player) sender);
-            if (msg != null) {
-                if (msg.equalsIgnoreCase("default")) {
-                    plugin.getMessageManager().getMessage("notices.game_joined").sendTo(sender, new QuickMap<>("{GAME}", game.getName()).build());
-                } else {
-                    sender.sendMessage(msg);
-                }
-            }
+            GameMessageHelper.handleGameMessage(game, GameMessage.JOIN, (Player) sender);
         } catch (GamePlayerAddException ex) {
             plugin.getMessageManager().getMessage("errors.game_cannot_join").sendTo(sender, new QuickMap<>("{REASON}", ex.getMessage()).build());
 
@@ -122,8 +117,7 @@ public class CmdGames implements CommandExecutor {
         }
 
         ((GameLeaveModule) game).removePlayer((Player) sender);
-        //temporary, messages will be handled differently later
-        sender.sendMessage(((GameLeaveModule) game).getLeaveMessage((Player) sender));
+        GameMessageHelper.handleGameMessage(game, GameMessage.LEAVE, (Player) sender);
     }
 
     /*
