@@ -27,6 +27,7 @@ public enum PermissionNode {
     GAMES_LEAVE,
     GAMES_LIST,
     SIGNS_CREATE,
+    SIGNS_DELETE,
     SIGNS_INFO,
     SIGNS_LIST,
     SIGNS_TELEPORT,

@@ -21,11 +21,14 @@ package com.stealthyone.mcb.gamegine.backend.signs;
 import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.signs.ActiveGSign;
 import com.stealthyone.mcb.gamegine.api.signs.modules.GSignInteractModule;
+import com.stealthyone.mcb.gamegine.permissions.PermissionNode;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 @RequiredArgsConstructor
@@ -45,6 +48,21 @@ public class SignListener implements Listener {
             e.setCancelled(true);
             ((GSignInteractModule) gameSign.getType()).playerInteract(e, gameSign);
         }
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent e) {
+        Player p = e.getPlayer();
+        ActiveGSign sign = plugin.getSignManager().getSign(e.getBlock().getLocation());
+        if (sign == null) return;
+
+        if (!PermissionNode.SIGNS_DELETE.isAllowedAlert(p) || !p.isSneaking()) {
+            e.setCancelled(true);
+            return;
+        }
+
+        plugin.getSignManager().deleteActiveSign(sign);
+        plugin.getMessageManager().getMessage("notices.sign_deleted").sendTo(p);
     }
 
 }

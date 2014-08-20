@@ -39,6 +39,7 @@ notices:
   cooldowns_player_has_none: '&c&oNo cooldowns.'
   game_joined: '&9Successfully joined game: &6{GAME}&9.'
   signs_created: '&9Successfully created sign.'
+  signs_deleted: '&9Successfully removed sign.'
   signs_teleported: '&9Teleported to sign &6#{SIGN} &9for game &6{GAME}&9.'
   plugin_reloaded: '{TAG}&9Plugin configuration &creloaded &9from the disk.'
   plugin_saved: '{TAG}&9Plugin data and configuration &asaved &9to the disk.'

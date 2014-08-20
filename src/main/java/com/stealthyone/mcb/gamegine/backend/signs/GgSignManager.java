@@ -219,7 +219,7 @@ public class GgSignManager implements SignManager {
      *
      * @param sign Sign to unload and delete.
      */
-    private void deleteActiveSign(ActiveGSign sign) {
+    public void deleteActiveSign(@NonNull ActiveGSign sign) {
         BlockLocation location = sign.getLocation();
         if (location == null) return;
 
