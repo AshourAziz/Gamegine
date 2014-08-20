@@ -7,7 +7,6 @@ import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
 import com.stealthyone.mcb.gamegine.api.signs.ActiveGSign;
 import com.stealthyone.mcb.gamegine.api.signs.GSignType;
 import com.stealthyone.mcb.gamegine.api.signs.SignManager;
-import com.stealthyone.mcb.gamegine.api.signs.modules.GSignInteractModule;
 import com.stealthyone.mcb.gamegine.api.signs.modules.GSignReloadModule;
 import com.stealthyone.mcb.gamegine.api.signs.variables.SignVariable;
 import com.stealthyone.mcb.gamegine.backend.signs.types.GameJoinSign;
@@ -32,18 +31,23 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 @RequiredArgsConstructor
-public class GgSignManager implements Listener, SignManager {
+public class GgSignManager implements SignManager {
 
     private final static Pattern YAML_FILE_PATTERN = Pattern.compile("(.+).yml");
 
@@ -52,10 +56,10 @@ public class GgSignManager implements Listener, SignManager {
     /* Configuration. */
     private InSignsListener inSignsListener;
 
-    private List<String> gameNotFoundFormat;
+    List<String> gameNotFoundFormat;
 
     /* Sign text variables. */
-    private Map<String, SignVariable> registeredVariables = new HashMap<>();
+    Map<String, SignVariable> registeredVariables = new HashMap<>();
     private Map<String, String> variableKeys = new HashMap<>();
 
     /* Sign types. */
@@ -68,7 +72,7 @@ public class GgSignManager implements Listener, SignManager {
     /* Loaded signs. */
     private File activeSignsDir;
 
-    private Map<BlockLocation, ActiveGSign> activeSigns = new HashMap<>();
+    Map<BlockLocation, ActiveGSign> activeSigns = new HashMap<>();
     private Map<String, Set<BlockLocation>> gameActiveSigns = new HashMap<>();
 
     private Set<BlockLocation> pendingActiveSignLocations = new HashSet<>();
@@ -249,7 +253,7 @@ public class GgSignManager implements Listener, SignManager {
         }
 
         if (inSignsEnabled) {
-            Bukkit.getPluginManager().registerEvents(inSignsListener = new InSignsListener(), plugin);
+            Bukkit.getPluginManager().registerEvents(inSignsListener = new InSignsListener(plugin), plugin);
             GamegineLogger.info("[SignManager] Enabling InSigns support.");
         } else {
             GamegineLogger.info("[SignManager] InSigns support disabled.");
@@ -339,20 +343,6 @@ public class GgSignManager implements Listener, SignManager {
     @Override
     public ActiveGSign getSign(@NonNull Location location) {
         return activeSigns.get(new BlockLocation(location));
-    }
-
-    @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent e) {
-        Block block = e.getClickedBlock();
-        if (block == null || (!block.getType().equals(Material.WALL_SIGN) && !block.getType().equals(Material.SIGN_POST))) {
-            return;
-        }
-
-        ActiveGSign gameSign = plugin.getSignManager().getSign(block.getLocation());
-        if (gameSign != null && gameSign.getType() instanceof GSignInteractModule) {
-            e.setCancelled(true);
-            ((GSignInteractModule) gameSign.getType()).playerInteract(e, gameSign);
-        }
     }
 
     /**
@@ -467,60 +457,6 @@ public class GgSignManager implements Listener, SignManager {
     /**
      * Listens for InSigns's SignSendEvent and modifies it accordingly.
      */
-    public class InSignsListener implements Listener {
 
-        @EventHandler
-        public void onSignSend(SignSendEvent e) {
-            BlockLocation loc = new BlockLocation(e.getLocation());
-            ActiveGSign sign = activeSigns.get(loc);
-            if (sign != null) {
-                List<String> newLines = getLines(sign, e.getPlayer());
-
-                for (int i = 0; i < 4; i++) {
-                    String line = newLines.get(i);
-                    if (line == null) continue;
-                    e.setLine(i + 1, ChatColor.translateAlternateColorCodes('&', newLines.get(i)));
-                }
-            }
-        }
-
-        private List<String> getLines(ActiveGSign sign, Player p) {
-            List<String> newLines;
-
-            GameInstance gameInstance;
-            try {
-                gameInstance = sign.getGame();
-                newLines = new ArrayList<>(sign.getType().getLines(sign));
-            } catch (IllegalStateException ex) {
-                // Game not loaded.
-                newLines = new ArrayList<>();
-
-                String[] gameClassSplit = sign.getGameInstanceRef().split(":")[0].split("\\.");
-                String gameName = gameClassSplit[gameClassSplit.length - 1];
-
-                for (int i = 0; i < 4; i++) {
-                    newLines.set(i, ChatColor.translateAlternateColorCodes('&', gameNotFoundFormat.get(i).replace("{GAME}", gameName)));
-                }
-                return newLines;
-            }
-
-            if (gameInstance != null && sign.getType().useSignVariables()) {
-                for (SignVariable var : registeredVariables.values()) {
-                    String varName = var.getClass().getCanonicalName();
-                    String replacement = var.getReplacement(gameInstance);
-
-                    for (int i = 0; i < 4; i++) {
-                        String string = newLines.get(i);
-                        if (string != null) {
-                            newLines.set(i, string.replace(varName, replacement));
-                        }
-                    }
-                }
-            }
-
-            return newLines;
-        }
-
-    }
 
 }

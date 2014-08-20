@@ -10,6 +10,7 @@ import com.stealthyone.mcb.gamegine.backend.arenas.GgArenaManager;
 import com.stealthyone.mcb.gamegine.backend.games.GgGameManager;
 import com.stealthyone.mcb.gamegine.backend.hooks.GgHookManager;
 import com.stealthyone.mcb.gamegine.backend.signs.GgSignManager;
+import com.stealthyone.mcb.gamegine.backend.signs.SignListener;
 import com.stealthyone.mcb.gamegine.commands.CmdGamegine;
 import com.stealthyone.mcb.gamegine.commands.CmdGames;
 import com.stealthyone.mcb.gamegine.commands.CmdSign;
@@ -86,7 +87,7 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
 
         GamegineLogger.debug("Registering listeners...");
         Bukkit.getPluginManager().registerEvents(new PlayerListener(this), this);
-        Bukkit.getPluginManager().registerEvents(signManager, this);
+        Bukkit.getPluginManager().registerEvents(new SignListener(this), this);
 
         GamegineLogger.debug("Registering commands...");
         getCommand("gamegine").setExecutor(new CmdGamegine(this));
