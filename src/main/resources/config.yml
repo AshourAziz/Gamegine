@@ -9,7 +9,7 @@ Players:
     Inactive time: 300
 Selections:
   Use WorldEdit: false
-  Wand item: RECORD_9:0
+  Global wand: RECORD_9:0
 Signs:
   Enabled: true
   Interact delay: 20

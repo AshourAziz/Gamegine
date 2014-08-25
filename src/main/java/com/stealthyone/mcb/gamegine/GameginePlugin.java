@@ -27,10 +27,13 @@ import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
 import com.stealthyone.mcb.gamegine.backend.arenas.GgArenaManager;
 import com.stealthyone.mcb.gamegine.backend.games.GgGameManager;
 import com.stealthyone.mcb.gamegine.backend.hooks.GgHookManager;
+import com.stealthyone.mcb.gamegine.backend.selections.GgSelectionManager;
 import com.stealthyone.mcb.gamegine.backend.signs.GgSignManager;
 import com.stealthyone.mcb.gamegine.backend.signs.SignListener;
 import com.stealthyone.mcb.gamegine.commands.CmdGamegine;
 import com.stealthyone.mcb.gamegine.commands.CmdGames;
+import com.stealthyone.mcb.gamegine.commands.CmdSelection;
+import com.stealthyone.mcb.gamegine.commands.CmdSelectionCompleter;
 import com.stealthyone.mcb.gamegine.commands.CmdSign;
 import com.stealthyone.mcb.gamegine.listeners.PlayerListener;
 import com.stealthyone.mcb.gamegine.players.GgPlayerManager;
@@ -62,6 +65,7 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
     private GgGameManager gameManager;
     private GgHookManager hookManager;
     private GgPlayerManager playerManager;
+    private GgSelectionManager selectionManager;
     private GgSignManager signManager;
 
     /* Commands */
@@ -95,8 +99,13 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
 
         GamegineLogger.debug("Creating Gamegine managers...");
         arenaManager = new GgArenaManager(this);
+
         gameManager = new GgGameManager(this);
+
         playerManager = new GgPlayerManager(this);
+
+        selectionManager = new GgSelectionManager(this);
+
         signManager = new GgSignManager(this);
         signManager.load();
 
@@ -110,6 +119,8 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
         GamegineLogger.debug("Registering commands...");
         getCommand("gamegine").setExecutor(new CmdGamegine(this));
         getCommand("gameginegames").setExecutor(cmdGames);
+        getCommand("gamegineselection").setExecutor(new CmdSelection(this));
+        getCommand("gamegineselection").setTabCompleter(new CmdSelectionCompleter(this));
         getCommand("gameginesigns").setExecutor(new CmdSign(this));
 
         GamegineLogger.info(String.format("Gamegine v%s by Stealth2800 successfully ENABLED.", getVersion()));
@@ -171,6 +182,11 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
     @Override
     public GgPlayerManager getPlayerManager() {
         return playerManager;
+    }
+
+    @Override
+    public GgSelectionManager getSelectionManager() {
+        return selectionManager;
     }
 
     @Override

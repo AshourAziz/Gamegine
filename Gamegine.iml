@@ -16,10 +16,10 @@
     <orderEntry type="library" name="Maven: com.stealthyone.mcb:stbukkitlib:1.2.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: com.stealthyone.mcb:mcml:1.2.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: mkremins:fanciful:0.2.0-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.projectlombok:lombok:1.14.4" level="project" />
     <orderEntry type="library" name="Maven: com.sk89q:worldguard:5.9.1-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: com.sk89q:worldedit:5.7-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: de.blablubbabc:insigns:2.0" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: org.projectlombok:lombok:1.14.4" level="project" />
   </component>
 </module>
 

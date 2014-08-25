@@ -26,12 +26,17 @@ public enum PermissionNode {
     GAMES_JOIN,
     GAMES_LEAVE,
     GAMES_LIST,
+
+    SELECTIONS_INFO,
+    SELECTIONS_TYPE,
+
     SIGNS_CREATE,
     SIGNS_DELETE,
     SIGNS_INFO,
     SIGNS_LIST,
     SIGNS_TELEPORT,
     SIGNS_TYPES,
+
     RELOAD,
     SAVE;
 

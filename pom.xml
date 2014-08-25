@@ -14,6 +14,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.mainClass>${project.groupId}.${project.artifactId}.GameginePlugin</project.mainClass>
+        <project.authors>Stealth2800</project.authors>
     </properties>
 
     <ciManagement>
@@ -158,7 +160,7 @@
                             <relocations>
                                 <relocation>
                                     <pattern>com.stealthyone.mcb.stbukkitlib</pattern>
-                                    <shadedPattern>com.stealthyone.mcb.gamegine.shade.stbukkitlib</shadedPattern>
+                                    <shadedPattern>${project.groupId}.${project.artifactId}.shade.stbukkitlib</shadedPattern>
                                 </relocation>
                             </relocations>
 

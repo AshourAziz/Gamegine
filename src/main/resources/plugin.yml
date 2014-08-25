@@ -1,28 +1,38 @@
 name: ${project.name}
 version: ${project.version}
-description: 'Game library for Bukkit'
+description: '${project.description}'
 depend: []
 softdepend: [InSigns, WorldEdit, WorldGuard]
-author: Stealth2800
-website: http://stealthyone.com
-main: com.stealthyone.mcb.gamegine.GameginePlugin
+authors: [${project.authors}]
+website: ${project.url}
+main: ${project.mainClass}
 commands:
-  cooldown:
-    aliases: [ggc, cooldowns]
   gamegine:
     aliases: [gg]
   gameginegames:
     aliases: [games, game, ggames, ggame]
+  gamegineselection:
+    aliases: [ggsel, gsel, sel, selection]
   gameginesigns:
     aliases: [signs, sign, gsigns, gsign]
 permissions:
+  #####################
+  # Permission groups #
+  #####################
   gamegine.admin:
     description: 'Gives access to all admin commands.'
     default: op
     children:
+      gamegine.admin.selections: true
       gamegine.admin.signs: true
       gamegine.reload: true
       gamegine.save: true
+  gamegine.admin.selections:
+    description: 'Gives access to all selection permissions.'
+    default: false
+    children:
+      gamegine.selections.info: true
+      gamegine.selections.type: true
   gamegine.admin.signs:
     description: 'Gives access to all sign permissions.'
     default: false
@@ -40,12 +50,19 @@ permissions:
       gamegine.games.leave: true
       gamegine.games.list: true
 
+  ###################
+  # Plugin commands #
+  ###################
   gamegine.reload:
     description: 'Allows a player to reload Gamegine''s configuration.'
     default: false
   gamegine.save:
     description: 'Allows a player to save Gamegine''s data and configuration.'
     default: false
+
+  #################
+  # Game commands #
+  #################
   gamegine.games.join:
     description: 'Allows a player to use Gamegine''s join command.'
     default: false
@@ -55,6 +72,20 @@ permissions:
   gamegine.games.list:
     description: 'Allows a player to list all of the currently registered games.'
     default: false
+
+  ######################
+  # Selection commands #
+  ######################
+  gamegine.selections.info:
+    description: 'Allows a player to view their current selection information.'
+    default: false
+  gamegine.selections.type:
+    description: 'Allows a player to set their currently active selection handler.'
+    default: false
+
+  #################
+  # Sign commands #
+  #################
   gamegine.signs.create:
     description: 'Allows a player to create a Gamegine sign.'
     default: false
