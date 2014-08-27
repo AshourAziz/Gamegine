@@ -22,7 +22,7 @@ import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.selections.SelectionHandler;
 import com.stealthyone.mcb.gamegine.api.selections.SelectionManager;
 import com.stealthyone.mcb.gamegine.backend.selections.GgSelectionManager;
-import com.stealthyone.mcb.gamegine.lib.selections.Selection;
+import com.stealthyone.mcb.gamegine.api.selections.Selection;
 import com.stealthyone.mcb.gamegine.permissions.PermissionNode;
 import com.stealthyone.mcb.stbukkitlib.messages.MessageManager;
 import com.stealthyone.mcb.stbukkitlib.utils.QuickMap;

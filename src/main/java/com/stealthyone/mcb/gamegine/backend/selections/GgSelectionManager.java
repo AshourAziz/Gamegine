@@ -20,13 +20,11 @@ package com.stealthyone.mcb.gamegine.backend.selections;
 
 import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
+import com.stealthyone.mcb.gamegine.api.selections.Selection;
 import com.stealthyone.mcb.gamegine.api.selections.SelectionHandler;
 import com.stealthyone.mcb.gamegine.api.selections.SelectionManager;
-import com.stealthyone.mcb.gamegine.api.selections.exceptions.PlayerNoSelectionHandlerException;
 import com.stealthyone.mcb.gamegine.api.selections.wands.SelectionWand;
 import com.stealthyone.mcb.gamegine.api.selections.wands.SelectionWandBuilder;
-import com.stealthyone.mcb.gamegine.lib.selections.Selection;
-import com.stealthyone.mcb.gamegine.lib.selections.SelectionLoader;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
@@ -55,7 +53,7 @@ public class GgSelectionManager implements SelectionManager {
     private Map<UUID, String> playerSelectionHandlers = new HashMap<>();
 
     /**
-     * Stores the current {@link com.stealthyone.mcb.gamegine.lib.selections.Selection}s for Players.
+     * Stores the current {@link com.stealthyone.mcb.gamegine.api.selections.Selection}s for Players.
      */
     private Map<UUID, Selection> playerSelections = new HashMap<>();
 
@@ -63,11 +61,6 @@ public class GgSelectionManager implements SelectionManager {
      * Stores registered {@link com.stealthyone.mcb.gamegine.api.selections.SelectionHandler} data.
      */
     private Map<String, SelectionHandler> selectionHandlers = new HashMap<>();
-
-    /**
-     * Stores registered {@link com.stealthyone.mcb.gamegine.lib.selections.SelectionLoader} data.
-     */
-    private Map<String, SelectionLoader> selectionLoaders = new HashMap<>();
 
     public void reload() {
         Object obj = plugin.getConfig().get("Selections.Global wand");
@@ -111,47 +104,13 @@ public class GgSelectionManager implements SelectionManager {
     }
 
     @Override
-    public boolean registerSelectionLoader(@NonNull SelectionLoader loader, @NonNull Class<? extends Selection> type) {
-        String identifier = type.getCanonicalName();
-        if (selectionLoaders.containsKey(identifier)) return false;
-
-        selectionLoaders.put(identifier, loader);
-        return true;
-    }
-
-    @Override
-    public <T extends Selection> SelectionLoader<T> getSelectionLoader(@NonNull Class<T> selectionClass) {
-        String identifier = selectionClass.getCanonicalName();
-        return !selectionLoaders.containsKey(identifier) ? null : (SelectionLoader<T>) selectionLoaders.get(identifier);
-    }
-
-    @Override
-    public SelectionWand getSelectionWand() {
+    public SelectionWand getGlobalWand() {
         return globalWand;
     }
 
     @Override
     public Selection getPlayerSelection(@NonNull Player player) {
         return playerSelections.get(player.getUniqueId());
-    }
-
-    @Override
-    public Selection createPlayerSelection(@NonNull Player player) {
-        SelectionHandler selectionHandler = getPlayerSelectionHandler(player);
-        if (selectionHandler == null) {
-            throw new PlayerNoSelectionHandlerException();
-        }
-
-        Selection selection;
-        try {
-            selection = selectionHandler.createSelection(player);
-        } catch (Exception ex) {
-            GamegineLogger.warning("Unable to create selection for '" + player.getName() + "' using selection handler: " + selectionHandler.getName());
-            return null;
-        }
-
-        playerSelections.put(player.getUniqueId(), selection);
-        return selection;
     }
 
     @Override
