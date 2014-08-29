@@ -20,6 +20,7 @@ package com.stealthyone.mcb.gamegine.commands;
 
 import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.games.Game;
+import com.stealthyone.mcb.gamegine.api.selections.SelectionHandler;
 import com.stealthyone.mcb.gamegine.permissions.PermissionNode;
 import com.stealthyone.mcb.stbukkitlib.messages.Message;
 import com.stealthyone.mcb.stbukkitlib.utils.QuickMap;
@@ -66,6 +67,15 @@ public final class CommandUtils {
             plugin.getMessageManager().getMessage("errors.page_must_be_int").sendTo(sender);
             return -1;
         }
+    }
+
+    public static SelectionHandler getSelectionHandler(GameginePlugin plugin, Player player) {
+        SelectionHandler selectionHandler = plugin.getSelectionManager().getPlayerSelectionHandler(player);
+        if (selectionHandler == null) {
+            plugin.getMessageManager().getMessage("errors.selections_handler_not_set").sendTo(player);
+            return null;
+        }
+        return selectionHandler;
     }
 
 }

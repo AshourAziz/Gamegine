@@ -19,10 +19,12 @@
 package com.stealthyone.mcb.gamegine.backend.selections;
 
 import com.stealthyone.mcb.gamegine.GameginePlugin;
+import com.stealthyone.mcb.gamegine.api.hooks.plugins.defaults.HookWorldGuard;
 import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
 import com.stealthyone.mcb.gamegine.api.selections.Selection;
 import com.stealthyone.mcb.gamegine.api.selections.SelectionHandler;
 import com.stealthyone.mcb.gamegine.api.selections.SelectionManager;
+import com.stealthyone.mcb.gamegine.api.selections.impl.worldguard.WorldGuardSelectionHandler;
 import com.stealthyone.mcb.gamegine.api.selections.wands.SelectionWand;
 import com.stealthyone.mcb.gamegine.api.selections.wands.SelectionWandBuilder;
 import lombok.NonNull;
@@ -82,6 +84,18 @@ public class GgSelectionManager implements SelectionManager {
         }
     }
 
+    /**
+     * Registers defaults.
+     */
+    public void loadDefaults() {
+        if (plugin.getHookManager().isEnabled(HookWorldGuard.class)) {
+            registerSelectionHandler(new WorldGuardSelectionHandler());
+            GamegineLogger.info("[Selections] WorldGuard is loaded, WorldGuard region selection support enabled.");
+        } else {
+            GamegineLogger.warning("[Selections] WorldGuard was not found, WorldGuard region selection support disabled.");
+        }
+    }
+
     @Override
     public boolean registerSelectionHandler(@NonNull SelectionHandler handler) {
         String identifier = handler.getName();
@@ -111,6 +125,16 @@ public class GgSelectionManager implements SelectionManager {
     @Override
     public Selection getPlayerSelection(@NonNull Player player) {
         return playerSelections.get(player.getUniqueId());
+    }
+
+    @Override
+    public boolean setPlayerSelection(@NonNull Player player, Selection selection) {
+        if (selection == null) {
+            return playerSelections.remove(player.getUniqueId()) != null;
+        }
+
+        playerSelections.put(player.getUniqueId(), selection);
+        return true;
     }
 
     @Override

@@ -110,6 +110,7 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
         signManager.load();
 
         GamegineLogger.debug("Loading defaults...");
+        selectionManager.loadDefaults();
         signManager.loadDefaults();
 
         GamegineLogger.debug("Registering listeners...");

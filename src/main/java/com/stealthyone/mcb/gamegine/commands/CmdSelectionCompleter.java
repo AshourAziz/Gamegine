@@ -42,7 +42,7 @@ public class CmdSelectionCompleter implements TabCompleter {
                     return cmdType();
             }
         } else {
-            return Arrays.asList("info", "type");
+            return Arrays.asList("create", "info", "type");
         }
         return null;
     }

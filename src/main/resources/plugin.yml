@@ -31,6 +31,7 @@ permissions:
     description: 'Gives access to all selection permissions.'
     default: false
     children:
+      gamegine.selections.create: true
       gamegine.selections.info: true
       gamegine.selections.type: true
   gamegine.admin.signs:
@@ -76,6 +77,9 @@ permissions:
   ######################
   # Selection commands #
   ######################
+  gamegine.selections.create:
+    description: 'Allows a player to create a selection.'
+    default: false
   gamegine.selections.info:
     description: 'Allows a player to view their current selection information.'
     default: false

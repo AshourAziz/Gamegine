@@ -61,7 +61,7 @@ public class GgHookManager implements HookManager {
 
     @Override
     public boolean isEnabled(@NonNull String hookName) {
-        Class<? extends Hook> clazz = hookNameIndex.get(hookName.toLowerCase());
+        Class<? extends Hook> clazz = hookNameIndex.get(hookName);
         return clazz != null && isEnabled(clazz);
     }
 

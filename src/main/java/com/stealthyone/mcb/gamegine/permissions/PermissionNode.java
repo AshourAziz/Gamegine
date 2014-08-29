@@ -27,6 +27,7 @@ public enum PermissionNode {
     GAMES_LEAVE,
     GAMES_LIST,
 
+    SELECTIONS_CREATE,
     SELECTIONS_INFO,
     SELECTIONS_TYPE,
 
