@@ -19,12 +19,17 @@
 package com.stealthyone.mcb.gamegine.backend.signs;
 
 import com.stealthyone.mcb.gamegine.GameginePlugin;
-import com.stealthyone.mcb.gamegine.api.games.Game;
+import com.stealthyone.mcb.gamegine.api.Gamegine;
 import com.stealthyone.mcb.gamegine.api.hooks.plugins.defaults.HookInSigns;
 import com.stealthyone.mcb.gamegine.api.logging.GamegineLogger;
 import com.stealthyone.mcb.gamegine.api.signs.ActiveGSign;
 import com.stealthyone.mcb.gamegine.api.signs.GSignType;
 import com.stealthyone.mcb.gamegine.api.signs.SignManager;
+import com.stealthyone.mcb.gamegine.api.signs.handler.GSignProvider;
+import com.stealthyone.mcb.gamegine.api.signs.handler.MultiSignHandler;
+import com.stealthyone.mcb.gamegine.api.signs.handler.SignHandler;
+import com.stealthyone.mcb.gamegine.api.signs.handler.SignProviderReference;
+import com.stealthyone.mcb.gamegine.api.signs.handler.SingleSignHandler;
 import com.stealthyone.mcb.gamegine.api.signs.modules.GSignReloadModule;
 import com.stealthyone.mcb.gamegine.api.signs.variables.SignVariable;
 import com.stealthyone.mcb.gamegine.backend.signs.types.GameJoinSign;
@@ -32,8 +37,6 @@ import com.stealthyone.mcb.gamegine.backend.signs.variables.SignGameIDVar;
 import com.stealthyone.mcb.gamegine.backend.signs.variables.SignGameNameVar;
 import com.stealthyone.mcb.gamegine.backend.signs.variables.SignPlayerCountVar;
 import com.stealthyone.mcb.gamegine.backend.signs.variables.SignPlayersVar;
-import com.stealthyone.mcb.gamegine.lib.games.InstanceGame;
-import com.stealthyone.mcb.gamegine.lib.games.instances.GameInstance;
 import com.stealthyone.mcb.gamegine.utils.BlockLocation;
 import com.stealthyone.mcb.stbukkitlib.storage.YamlFileManager;
 import com.stealthyone.mcb.stbukkitlib.utils.ConfigUtils;
@@ -62,6 +65,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @RequiredArgsConstructor
@@ -74,7 +78,7 @@ public class GgSignManager implements SignManager {
     /* Configuration. */
     private InSignsListener inSignsListener;
 
-    List<String> gameNotFoundFormat;
+    List<String> signInvalidProviderFormat;
 
     /* Sign text variables. */
     Map<String, SignVariable> registeredVariables = new HashMap<>();
@@ -87,14 +91,51 @@ public class GgSignManager implements SignManager {
     private Map<String, GSignType> registeredSignTypes = new HashMap<>();
     private Map<String, String> typeShortNameIndex = new HashMap<>(); // Short name, Type
 
+    /**
+     * Registered {@link com.stealthyone.mcb.gamegine.api.signs.handler.SignHandler}s.<br />
+     * <b>Structure:</b> handler identifier, handler instance<br />
+     * The identifier is the result of {@link Class#getCanonicalName()} for the {@link com.stealthyone.mcb.gamegine.api.signs.handler.SignHandler} class.
+     */
+    private Map<String, SignHandler> signHandlers = new HashMap<>();
+
+    /**
+     * An index of each {@link com.stealthyone.mcb.gamegine.api.signs.handler.SignHandler}'s name.<br />
+     * <b>Structure:</b> handler name, handler identifier<br />
+     */
+    private Map<String, String> signHandlerNames = new HashMap<>();
+
     /* Loaded signs. */
     private File activeSignsDir;
 
+    /**
+     * Stores all loaded {@link com.stealthyone.mcb.gamegine.api.signs.ActiveGSign}s according to their location.
+     */
     Map<BlockLocation, ActiveGSign> activeSigns = new HashMap<>();
-    private Map<String, Set<BlockLocation>> gameActiveSigns = new HashMap<>();
 
+    /**
+     * An index of all of the signs that are loaded for each {@link com.stealthyone.mcb.gamegine.api.signs.handler.GSignProvider}.
+     */
+    private Map<SignProviderReference, Set<BlockLocation>> providerSigns = new HashMap<>();
+
+    /**
+     * A set of the locations of {@link com.stealthyone.mcb.gamegine.api.signs.ActiveGSign}s that were unable to load because the
+     * {@link com.stealthyone.mcb.gamegine.api.signs.GSignType} was not registered.<br />
+     * <br />
+     * Used in order to continue tracking the signs even though they're not fully loaded yet.
+     */
     private Set<BlockLocation> pendingActiveSignLocations = new HashSet<>();
+
+    /**
+     * A collection of {@link com.stealthyone.mcb.gamegine.api.signs.ActiveGSign}s that were unable to load because the {@link com.stealthyone.mcb.gamegine.api.signs.GSignType} was not registered.<br />
+     * <br />
+     * If the name of a newly registered {@link com.stealthyone.mcb.gamegine.api.signs.GSignType} is contained in this, will attempt to load the signs again.
+     */
     private Map<String, Set<String>> pendingActiveSigns = new HashMap<>(); // Type name, list of file names.
+
+    /**
+     * A map of each player's currently selected {@link com.stealthyone.mcb.gamegine.api.signs.handler.GSignProvider}.
+     */
+    private Map<UUID, SignProviderReference> playerProviders = new HashMap<>();
 
     /**
      * Registers defaults.
@@ -177,34 +218,37 @@ public class GgSignManager implements SignManager {
         }
 
         GSignType type = registeredSignTypes.get(typeName);
-        ActiveGSign activeGameSign = new ActiveGSign(type, yamlFile);
+        ActiveGSign activeGameSign;
         try {
-            activeGameSign.getGame();
-        } catch (IllegalArgumentException ex) {
-            // gameInstanceRef is invalid.
-            GamegineLogger.warning("[Signs] Unable to load active sign from " + file.getPath() + " - invalid game instance reference.");
+            activeGameSign = new ActiveGSign(type, yamlFile);
+        } catch (Exception ex) {
+            GamegineLogger.warning("[Signs] Unable to load active sign from " + file.getPath() + " - no provider reference is set.");
             file.delete();
             return false;
+        }
+
+
+        try {
+            activeGameSign.getProvider();
         } catch (UnsupportedOperationException ex) {
-            // Game does not implement SingleInstanceGame or MultiInstanceGame.
-            GamegineLogger.warning("[Signs] Unable to load active sign from " + file.getPath() + " - game does not support signs.");
+            // Handler is not a SingleSignHandler or MultiSignHandler
+            GamegineLogger.warning("[Signs] Unable to load active sign from " + file.getPath() + " - invalid sign handler.");
             file.delete();
             return false;
         } catch (IllegalStateException eX) {
-            // Game is not loaded. We don't have to worry about this.
+            // Provider is not loaded. We don't have to worry about this.
         }
 
         activeSigns.put(location, activeGameSign);
 
-        String[] gameInstanceRef = activeGameSign.getGameInstanceRef().split(":");
-        String gameClassName = gameInstanceRef[0];
+        SignProviderReference providerRef = activeGameSign.getProviderReference();
 
-        Set<BlockLocation> gameLocations = gameActiveSigns.get(gameClassName);
-        if (gameLocations == null) {
-            gameLocations = new LinkedHashSet<>();
-            gameActiveSigns.put(gameClassName, gameLocations);
+        Set<BlockLocation> providerLocations = providerSigns.get(providerRef);
+        if (providerLocations == null) {
+            providerLocations = new LinkedHashSet<>();
+            providerSigns.put(providerRef, providerLocations);
         }
-        gameLocations.add(location);
+        providerLocations.add(location);
 
         pendingActiveSignLocations.remove(location);
         Set<String> fileNames = pendingActiveSigns.get(typeName);
@@ -225,9 +269,9 @@ public class GgSignManager implements SignManager {
 
         activeSigns.remove(location);
 
-        String gameName = sign.getGame().getOwner().getClass().getCanonicalName();
-        if (gameActiveSigns.containsKey(gameName)) {
-            gameActiveSigns.get(gameName).remove(location);
+        String handlerName = sign.getProviderReference().getHandlerIdentifier();
+        if (providerSigns.containsKey(handlerName)) {
+            providerSigns.get(handlerName).remove(location);
         }
         sign.getFile().getFile().delete();
     }
@@ -248,13 +292,13 @@ public class GgSignManager implements SignManager {
         // Reload plugin configuration.
         FileConfiguration pConfig = plugin.getConfig();
 
-        gameNotFoundFormat = pConfig.getStringList("Signs.Formats.Game not found");
-        if (gameNotFoundFormat.size() != 4) {
-            gameNotFoundFormat = Arrays.asList(
+        signInvalidProviderFormat = pConfig.getStringList("Signs.Formats.Provider not found");
+        if (signInvalidProviderFormat.size() != 4) {
+            signInvalidProviderFormat = Arrays.asList(
                     "" + ChatColor.GREEN + ChatColor.BOLD + "\u300AGamegine\u300B",
-                    ChatColor.DARK_RED + "GAME NOT FOUND",
+                    ChatColor.DARK_RED + "NOT FOUND",
                     null,
-                    ChatColor.RED + "{GAME}"
+                    ChatColor.RED + "{PROVIDER}"
             );
             GamegineLogger.warning("[Signs] Game not found sign format is not 4 lines, using the default format.");
         }
@@ -353,6 +397,77 @@ public class GgSignManager implements SignManager {
     }
 
     @Override
+    public boolean registerSignHandler(@NonNull SignHandler signHandler) {
+        String identifier = signHandler.getClass().getCanonicalName();
+        if (signHandlers.containsKey(identifier)) {
+            return false;
+        }
+
+        if (signHandler instanceof SingleSignHandler) {
+            SignProviderReference ref = new SignProviderReference(((SingleSignHandler) signHandler).getProvider());
+
+            Set<BlockLocation> locs = providerSigns.get(ref);
+            if (locs != null && !locs.isEmpty()) {
+                for (BlockLocation loc : locs) {
+                    updateSign(activeSigns.get(loc));
+                }
+            }
+        } else if (signHandler instanceof MultiSignHandler) {
+            for (GSignProvider provider : ((MultiSignHandler) signHandler).getProviders()) {
+                SignProviderReference ref = new SignProviderReference(provider);
+
+                Set<BlockLocation> locs = providerSigns.get(ref);
+                if (locs != null && !locs.isEmpty()) {
+                    for (BlockLocation loc : locs) {
+                        updateSign(activeSigns.get(loc));
+                    }
+                }
+            }
+        } else {
+            throw new UnsupportedOperationException("Unable to register sign handler - handler is invalid.");
+        }
+
+        String name = signHandler.getName();
+        if (!signHandlerNames.containsKey(name.toLowerCase())) {
+            signHandlerNames.put(name.toLowerCase(), identifier);
+        } else {
+            signHandlerNames.put(identifier, identifier);
+        }
+
+        signHandlers.put(identifier, signHandler);
+        return true;
+    }
+
+    @Override
+    public SignHandler getSignHandler(@NonNull String identifier) {
+        return signHandlers.get(identifier);
+    }
+
+    @Override
+    public SignHandler getSignHandlerByName(@NonNull String name) {
+        String identifier = signHandlerNames.get(name.toLowerCase());
+        return identifier == null ? null : signHandlers.get(identifier);
+    }
+
+    @Override
+    public GSignProvider getSignProvider(@NonNull SignProviderReference reference) {
+        SignHandler handler = Gamegine.getInstance().getSignManager().getSignHandler(reference.getHandlerIdentifier());
+        if (handler == null) {
+            throw new IllegalStateException("Sign handler '" + reference.getHandlerIdentifier() + "' is not loaded.");
+        }
+
+        GSignProvider provider;
+        if (handler instanceof SingleSignHandler) {
+            provider = ((SingleSignHandler) handler).getProvider();
+        } else if (handler instanceof MultiSignHandler) {
+            provider = ((MultiSignHandler) handler).getProvider(reference.getId());
+        } else {
+            throw new UnsupportedOperationException("Sign handler '" + handler.getClass().getCanonicalName() + "' is invalid - does not implement SingleSignHandler or MultiSignHandler.");
+        }
+        return provider;
+    }
+
+    @Override
     public GSignType getSignType(@NonNull String shortName) {
         String typeClazz = typeShortNameIndex.get(shortName.toLowerCase());
         return typeClazz == null ? null : registeredSignTypes.get(typeClazz);
@@ -374,27 +489,27 @@ public class GgSignManager implements SignManager {
         Sign signBlock = (Sign) sign.getLocation().getBlock().getState();
         List<String> newLines;
 
-        GameInstance gameInstance;
+        GSignProvider provider;
         try {
-            gameInstance = sign.getGame();
+            provider = sign.getProvider();
             newLines = new ArrayList<>(sign.getType().getLines(sign));
         } catch (IllegalStateException ex) {
-            // Game not loaded.
+            // Provider not found.
             newLines = new ArrayList<>();
 
-            String[] gameClassSplit = sign.getGameInstanceRef().split(":")[0].split("\\.");
-            String gameName = gameClassSplit[gameClassSplit.length - 1];
+            String[] providerRefSplit = sign.getProviderReference().getHandlerIdentifier().split(":")[0].split("\\.");
+            String providerName = providerRefSplit[providerRefSplit.length - 1];
 
             for (int i = 0; i < 4; i++) {
-                newLines.set(i, ChatColor.translateAlternateColorCodes('&', gameNotFoundFormat.get(i).replace("{GAME}", gameName)));
+                newLines.set(i, ChatColor.translateAlternateColorCodes('&', signInvalidProviderFormat.get(i).replace("{PROVIDER}", providerName)));
             }
             return;
         }
 
-        if (gameInstance != null && sign.getType().useSignVariables()) {
+        if (provider != null && sign.getType().useSignVariables()) {
             for (SignVariable var : registeredVariables.values()) {
                 String varName = var.getClass().getCanonicalName();
-                String replacement = var.getReplacement(gameInstance);
+                String replacement = var.getReplacement(provider);
 
                 for (int i = 0; i < 4; i++) {
                     String string = newLines.get(i);
@@ -414,16 +529,14 @@ public class GgSignManager implements SignManager {
     }
 
     /**
-     * Returns the loaded active signs for a game.
+     * Returns the loaded {@link com.stealthyone.mcb.gamegine.api.signs.ActiveGSign}s for a specified {@link com.stealthyone.mcb.gamegine.api.signs.handler.SignHandler}.
      *
-     * @param game The game to get the signs of.
-     * @return Collection of signs.
-     * @throws java.lang.IllegalArgumentException if the Game is not an instance of {@link com.stealthyone.mcb.gamegine.lib.games.InstanceGame}
+     * @param handler The {@link com.stealthyone.mcb.gamegine.api.signs.handler.SignHandler} to retrieve all loaded {@link com.stealthyone.mcb.gamegine.api.signs.ActiveGSign}s for.
+     * @return Collection of {@link com.stealthyone.mcb.gamegine.api.signs.ActiveGSign}s.
      */
-    public Collection<ActiveGSign> getActiveSigns(@NonNull Game game) {
-        if (!(game instanceof InstanceGame)) throw new IllegalArgumentException("Game cannot have signs - not an instance of InstanceGame.");
+    public Collection<ActiveGSign> getActiveSigns(@NonNull SignHandler handler) {
         Set<ActiveGSign> signs = new LinkedHashSet<>();
-        Set<BlockLocation> locations = gameActiveSigns.get(game.getClass().getCanonicalName());
+        Set<BlockLocation> locations = providerSigns.get(handler.getClass().getCanonicalName());
         if (locations != null && !locations.isEmpty()) {
             for (BlockLocation loc : locations) {
                 signs.add(activeSigns.get(loc));
@@ -442,18 +555,36 @@ public class GgSignManager implements SignManager {
     }
 
     /**
+     * Returns a read-only view of all of the registered sign handlers.
+     *
+     * @return Read-only collection of registered sign handlers.
+     */
+    public Collection<SignHandler> getSignHandlers() {
+        return Collections.unmodifiableCollection(signHandlers.values());
+    }
+
+    /**
+     * Returns a collection of all registered {@link com.stealthyone.mcb.gamegine.api.signs.handler.SignHandler} names.
+     *
+     * @return Read-only collection of all of the registered {@link com.stealthyone.mcb.gamegine.api.signs.handler.SignHandler} names.
+     */
+    public Collection<String> getSignHandlerNames() {
+        return Collections.unmodifiableCollection(signHandlerNames.keySet());
+    }
+
+    /**
      * Creates a sign.
      *
      * @param block Block that the sign will exist as.
      * @param type The type of sign to create.
-     * @param game The game the sign exists for.
+     * @param provider The {@link com.stealthyone.mcb.gamegine.api.signs.handler.GSignProvider} that handles the sign.
      * @param extraData Extra data that the sign needs.<br />
      *                  Can be null if there are no args.
      * @return True if successful.<br />
      *         False if unable to create.
      * @throws java.lang.IllegalArgumentException Thrown if the block is not a sign.
      */
-    public boolean createSign(@NonNull Block block, @NonNull GSignType type, @NonNull String gameRef, @NonNull GameInstance game, Map<String, Object> extraData) {
+    public boolean createSign(@NonNull Block block, @NonNull GSignType type, @NonNull GSignProvider provider, Map<String, Object> extraData) {
         if (block.getType() != Material.SIGN_POST || block.getType() != Material.WALL_SIGN)
             throw new IllegalArgumentException("Block is not a sign.");
 
@@ -461,7 +592,7 @@ public class GgSignManager implements SignManager {
         YamlFileManager file = new YamlFileManager(activeSignsDir + File.separator + location.toString() + ".yml");
         FileConfiguration config = file.getConfig();
         config.set("type", type.getClass().getCanonicalName());
-        config.set("game", gameRef);
+        config.set("provider", new SignProviderReference(provider).toString());
         config.set("location", location);
         if (extraData != null && !extraData.isEmpty()) {
             ConfigurationSection dataSec = config.createSection("extraData");
@@ -473,8 +604,39 @@ public class GgSignManager implements SignManager {
     }
 
     /**
-     * Listens for InSigns's SignSendEvent and modifies it accordingly.
+     * Returns the active {@link com.stealthyone.mcb.gamegine.api.signs.handler.GSignProvider} for a player.
+     *
+     * @param uuid The UUID of the player.
+     * @return The active {@link com.stealthyone.mcb.gamegine.api.signs.handler.GSignProvider} for the player.<br />
+     *         Null if the player does not have a {@link com.stealthyone.mcb.gamegine.api.signs.handler.GSignProvider} currently set.
      */
+    public GSignProvider getPlayerProvider(@NonNull UUID uuid) {
+        SignProviderReference ref = playerProviders.get(uuid);
+        if (ref == null) return null;
 
+        return getSignProvider(ref);
+    }
+
+    /**
+     * Sets a player's currently active {@link com.stealthyone.mcb.gamegine.api.signs.handler.GSignProvider}.
+     *
+     * @param uuid The UUID of the player.
+     * @param provider The {@link com.stealthyone.mcb.gamegine.api.signs.handler.GSignProvider} to set for the player.<br />
+     *                 If null, will remove the player's currently active provider.
+     * @return True if successful.<br />
+     *         False if the new reference matches the current reference for the player.
+     */
+    public boolean setPlayerProvider(@NonNull UUID uuid, GSignProvider provider) {
+        if (provider == null && !playerProviders.containsKey(uuid)) return false;
+        SignProviderReference newRef = provider == null ? null : new SignProviderReference(provider);
+        if (provider != null && playerProviders.containsKey(uuid) && playerProviders.get(uuid).equals(newRef)) return false;
+
+        if (provider != null) {
+            playerProviders.put(uuid, newRef);
+        } else {
+            playerProviders.remove(uuid);
+        }
+        return true;
+    }
 
 }

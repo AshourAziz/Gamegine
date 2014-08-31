@@ -18,12 +18,9 @@
  */
 package com.stealthyone.mcb.gamegine.backend.signs.variables;
 
-import com.stealthyone.mcb.gamegine.api.Gamegine;
-import com.stealthyone.mcb.gamegine.api.games.Game;
-import com.stealthyone.mcb.gamegine.api.games.modules.GameJoinModule;
+import com.stealthyone.mcb.gamegine.api.signs.handler.GSignProvider;
 import com.stealthyone.mcb.gamegine.api.signs.variables.SignVariable;
-import com.stealthyone.mcb.gamegine.lib.games.InstanceGame;
-import com.stealthyone.mcb.gamegine.lib.games.instances.GameInstance;
+import lombok.NonNull;
 
 /**
  * Can return a few different things:<br />
@@ -36,23 +33,15 @@ import com.stealthyone.mcb.gamegine.lib.games.instances.GameInstance;
 public class SignPlayerCountVar extends SignVariable {
 
     public SignPlayerCountVar() {
-        super("{PLAYERCOUNT}");
+        super(DefaultVariable.PLAYER_COUNT_FANCY);
     }
 
     @Override
-    public String getReplacement(GameInstance game) {
-        Game owner = game.getOwner();
-        int players = Gamegine.getInstance().getPlayerManager().getGamePlayers(game).size();
-        if (!(game instanceof GameJoinModule)) {
-            return Integer.toString(players);
-        } else {
-            int maxPlayers = ((GameJoinModule) game.getOwner()).getMaxPlayers(Integer.toString(((InstanceGame) owner).getId(game)));
-            if (maxPlayers == -1) {
-                return Integer.toString(players);
-            } else {
-                return players + "/" + maxPlayers;
-            }
-        }
+    public String getReplacement(@NonNull GSignProvider provider) {
+        String players = provider.getValue(DefaultVariable.PLAYER_COUNT);
+        String maxPlayers = provider.getValue(DefaultVariable.PLAYER_COUNT_MAX);
+
+        return maxPlayers != null ? (players + "/" + maxPlayers) : players;
     }
 
 }

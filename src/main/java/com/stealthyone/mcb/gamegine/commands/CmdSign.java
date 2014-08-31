@@ -19,14 +19,13 @@
 package com.stealthyone.mcb.gamegine.commands;
 
 import com.stealthyone.mcb.gamegine.GameginePlugin;
-import com.stealthyone.mcb.gamegine.api.games.Game;
 import com.stealthyone.mcb.gamegine.api.signs.ActiveGSign;
 import com.stealthyone.mcb.gamegine.api.signs.GSignType;
-import com.stealthyone.mcb.gamegine.backend.signs.GgSignManager;
-import com.stealthyone.mcb.gamegine.lib.games.InstanceGame;
-import com.stealthyone.mcb.gamegine.lib.games.MultiInstanceGame;
-import com.stealthyone.mcb.gamegine.lib.games.SingleInstanceGame;
-import com.stealthyone.mcb.gamegine.lib.games.instances.GameInstance;
+import com.stealthyone.mcb.gamegine.api.signs.handler.GSignProvider;
+import com.stealthyone.mcb.gamegine.api.signs.handler.MultiSignHandler;
+import com.stealthyone.mcb.gamegine.api.signs.handler.SignHandler;
+import com.stealthyone.mcb.gamegine.api.signs.handler.SignProviderReference;
+import com.stealthyone.mcb.gamegine.api.signs.handler.SingleSignHandler;
 import com.stealthyone.mcb.gamegine.permissions.PermissionNode;
 import com.stealthyone.mcb.stbukkitlib.messages.Message;
 import com.stealthyone.mcb.stbukkitlib.messages.MessageManager;
@@ -42,7 +41,11 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BlockIterator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map.Entry;
 
 @RequiredArgsConstructor
@@ -66,6 +69,11 @@ public class CmdSign implements CommandExecutor {
                     cmdDelete(sender, label, args);
                     return true;
 
+                /* Lists all registered sign handlers. */
+                case "handlers":
+                    cmdHandlers(sender, args);
+                    return true;
+
                 case "info":
                     cmdInfo(sender, label, args);
                     return true;
@@ -78,8 +86,14 @@ public class CmdSign implements CommandExecutor {
                     cmdTp(sender, label, args);
                     return true;
 
+                /* Lists all registered sign types. */
                 case "types":
                     cmdTypes(sender, label, args);
+                    return true;
+
+                /* Selects a sign provider. */
+                case "use":
+                    cmdUse(sender, label, args);
                     return true;
             }
         }
@@ -123,19 +137,39 @@ public class CmdSign implements CommandExecutor {
     }
 
     // Utility method.
-    private List<ActiveGSign> getActiveSigns(CommandSender sender, Game game) {
-        List<ActiveGSign> signs;
+    private SignHandler getSignHandler(CommandSender sender, String name) {
+        SignHandler handler = plugin.getSignManager().getSignHandlerByName(name);
+        if (handler == null) {
+            plugin.getMessageManager().getMessage("errors.signs_handler_not_found").sendTo(sender, new QuickMap<>("{NAME}", name).build());
+        }
+        return handler;
+    }
+
+    // Utility method.
+    private GSignProvider getSignProvider(CommandSender sender, String raw) {
+        SignProviderReference ref = new SignProviderReference(raw);
+        GSignProvider provider;
         try {
-            signs = new ArrayList<>(plugin.getSignManager().getActiveSigns(game));
-        } catch (IllegalArgumentException ex) {
-            plugin.getMessageManager().getMessage("errors.signs_invalid_game").sendTo(sender);
+            provider = plugin.getSignManager().getSignProvider(ref);
+        } catch (Exception ex) {
+            plugin.getMessageManager().getMessage("errors.signs_provider_invalid").sendTo(sender, new QuickMap<>("{REASON}", ex.getMessage()).build());
             return null;
         }
+
+        if (provider == null) {
+            plugin.getMessageManager().getMessage("errors.signs_provider_not_found").sendTo(sender, new QuickMap<>("{NAME}", ref.getHandlerIdentifier()).build());
+        }
+        return null;
+    }
+
+    // Utility method.
+    private List<ActiveGSign> getActiveSigns(SignHandler handler) {
+        List<ActiveGSign> signs = new ArrayList<>(plugin.getSignManager().getActiveSigns(handler));
 
         Collections.sort(signs, new Comparator<ActiveGSign>() {
             @Override
             public int compare(ActiveGSign o1, ActiveGSign o2) {
-                return o1.getGameInstanceRef().compareTo(o2.getGameInstanceRef());
+                return o1.getProviderReference().compareTo(o2.getProviderReference());
             }
         });
         return signs;
@@ -164,60 +198,15 @@ public class CmdSign implements CommandExecutor {
             return;
         }
 
-        String gameInstanceRef = args[2];
-        String[] split = gameInstanceRef.split(":");
-        Game game = plugin.getGameManager().getGameByName(split[0]);
-        if (game == null) {
-            plugin.getMessageManager().getMessage("errors.game_not_found").sendTo(sender, new QuickMap<>("{NAME}", split[0]).build());
-            return;
-        }
-
-        if (!(game instanceof InstanceGame)) {
-            plugin.getMessageManager().getMessage("errors.signs_invalid_game").sendTo(sender);
-            return;
-        }
-
-        GameInstance instance;
-
-        if (split.length == 1) {
-            if (game instanceof SingleInstanceGame) {
-                instance = ((SingleInstanceGame) game).getGameInstance();
-            } else {
-                plugin.getMessageManager().getMessage("errors.signs_create_ref_req").sendTo(sender);
-                return;
-            }
-        } else {
-            String rawId = split[1];
-            if (rawId.equalsIgnoreCase("MAIN")) {
-                if (game instanceof SingleInstanceGame) {
-                    instance = ((SingleInstanceGame) game).getGameInstance();
-                } else {
-                    plugin.getMessageManager().getMessage("errors.sign_create_ref_invalid").sendTo(sender);
-                    return;
-                }
-            } else {
-                if (game instanceof SingleInstanceGame) {
-                    plugin.getMessageManager().getMessage("errors.sign_create_ref_invalid").sendTo(sender);
-                    return;
-                } else {
-                    int id;
-                    try {
-                        id = Integer.parseInt(rawId);
-                    } catch (NumberFormatException ex) {
-                        plugin.getMessageManager().getMessage("errors.sign_create_ref_invalid").sendTo(sender);
-                        return;
-                    }
-                    instance = ((MultiInstanceGame) game).getGameInstance(id);
-                }
-            }
-        }
+        GSignProvider provider = getSignProvider(sender, args[2]);
+        if (provider == null) return;
 
         List<String> signArgs = new ArrayList<>();
         if (args.length > 3) {
             signArgs.addAll(Arrays.asList(args).subList(3, args.length));
         }
 
-        if (plugin.getSignManager().createSign(block, type, gameInstanceRef, instance, new QuickMap<String, Object>("args", signArgs.toArray(new String[signArgs.size()])).build())) {
+        if (plugin.getSignManager().createSign(block, type, provider, new QuickMap<String, Object>("args", signArgs.toArray(new String[signArgs.size()])).build())) {
             plugin.getMessageManager().getMessage("notices.signs_created").sendTo(sender);
         } else {
             plugin.getMessageManager().getMessage("errors.signs_unable_to_create").sendTo(sender);
@@ -229,6 +218,55 @@ public class CmdSign implements CommandExecutor {
      */
     private void cmdDelete(CommandSender sender, String label, String[] args) {
         //TODO: Add command to delete signs.  It'll also be possible to remove signs by shift+destroying them.
+    }
+
+    /*
+     * List all registered sign handlers.
+     */
+    private void cmdHandlers(CommandSender sender, String[] args) {
+        if (!CommandUtils.performBasicChecks(plugin, sender, PermissionNode.SIGNS_HANDLERS, false)) return;
+
+        int page = CommandUtils.getPage(plugin, sender, args, 1);
+        if (page == -1) return;
+
+        List<SignHandler> signHandlers = new ArrayList<>(plugin.getSignManager().getSignHandlers());
+        Collections.sort(signHandlers, new Comparator<SignHandler>() {
+            @Override
+            public int compare(SignHandler o1, SignHandler o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+
+        List<String> messages = new ArrayList<>();
+        Message elementMsg = plugin.getMessageManager().getMessage("plugin.cmd_signs_handlers_element");
+        for (int i = 0; i < 8; i++) {
+            int index = i + ((page - 1) * 8);
+
+            SignHandler cur;
+            try {
+                cur = signHandlers.get(index);
+            } catch (Exception ex) {
+                break;
+            }
+
+            messages.addAll(Arrays.asList(elementMsg.getFormattedMessages(new QuickMap<String, String>()
+                .put("{NUM}", Integer.toString(index + 1))
+                .put("{PROVIDERS}", Integer.toString(cur instanceof SingleSignHandler ? 1 : ((MultiSignHandler) cur).getProviders().size()))
+                .build()
+            )));
+        }
+
+        plugin.getMessageManager().getMessage("plugin.cmd_signs_handlers_header").sendTo(sender, new QuickMap<String, String>()
+            .put("{PAGE}", Integer.toString(page))
+            .put("{MAXPAGES}", Integer.toString(MiscUtils.getPageCount(signHandlers.size(), 8)))
+            .build()
+        );
+
+        if (messages.isEmpty()) {
+            plugin.getMessageManager().getMessage("plugin.cmd_signs_handlers_none").sendTo(sender);
+        } else {
+            sender.sendMessage(messages.toArray(new String[messages.size()]));
+        }
     }
 
     /*
@@ -248,7 +286,7 @@ public class CmdSign implements CommandExecutor {
 
         List<String> messages = new ArrayList<>();
         messages.add(String.format(LIST_ELEMENT, "Type", sign.getType().getClass().getCanonicalName()));
-        messages.add(String.format(LIST_ELEMENT, "Game", sign.getGameInstanceRef()));
+        messages.add(String.format(LIST_ELEMENT, "Provider", sign.getProviderReference().toString()));
         messages.add(String.format(LIST_ELEMENT, "File", sign.getFile().getFile().getPath()));
         StringBuilder extraData = new StringBuilder();
         for (Entry<String, Object> data : sign.getExtraData().entrySet()) {
@@ -265,19 +303,19 @@ public class CmdSign implements CommandExecutor {
 
     /*
      * List active signs.
-     * /{LABEL} list <game>
+     * /{LABEL} list <handler>
      */
     private void cmdList(CommandSender sender, String label, String[] args) {
         if (!CommandUtils.performBasicChecks(plugin, sender, PermissionNode.SIGNS_LIST, false)) return;
         if (!CommandUtils.performArgsCheck(plugin, sender, label, args.length, 2, plugin.getMessageManager().getMessage("usages.signs_list"))) return;
 
-        Game game = CommandUtils.retrieveGame(plugin, sender, args[1]);
-        if (game == null) return;
+        SignHandler handler = getSignHandler(sender, args[1]);
+        if (handler == null) return;
 
         int page = CommandUtils.getPage(plugin, sender, args, 2);
         if (page == -1) return;
 
-        List<ActiveGSign> signs = getActiveSigns(sender, game);
+        List<ActiveGSign> signs = getActiveSigns(handler);
         if (signs == null) return;
 
         List<String> messages = new ArrayList<>();
@@ -303,7 +341,7 @@ public class CmdSign implements CommandExecutor {
         }
 
         int pageCount = MiscUtils.getPageCount(signs.size(), 8);
-        mm.getMessage("plugin.cmd_signs_list_header").sendTo(sender, new QuickMap<>("{GAME}", game.getName()).put("{PAGE}", Integer.toString(page)).put("{MAXPAGES}", Integer.toString(pageCount)).build());
+        mm.getMessage("plugin.cmd_signs_list_header").sendTo(sender, new QuickMap<>("{HANDLER}", handler.getName()).put("{PAGE}", Integer.toString(page)).put("{MAXPAGES}", Integer.toString(pageCount)).build());
         if (messages.isEmpty()) {
             mm.getMessage("plugin.cmd_signs_list_none").sendTo(sender);
         } else {
@@ -318,10 +356,10 @@ public class CmdSign implements CommandExecutor {
         if (!CommandUtils.performBasicChecks(plugin, sender, PermissionNode.SIGNS_TELEPORT, true)) return;
         if (!CommandUtils.performArgsCheck(plugin, sender, label, args.length, 3, plugin.getMessageManager().getMessage("usages.signs_tp"))) return;
 
-        Game game = CommandUtils.retrieveGame(plugin, sender, args[1]);
-        if (game == null) return;
+        SignHandler handler = getSignHandler(sender, args[1]);
+        if (handler == null) return;
 
-        List<ActiveGSign> signs = getActiveSigns(sender, game);
+        List<ActiveGSign> signs = getActiveSigns(handler);
         if (signs == null) return;
 
         int number;
@@ -341,7 +379,7 @@ public class CmdSign implements CommandExecutor {
         }
 
         ((Player) sender).teleport(sign.getLocation().getBlock().getLocation());
-        plugin.getMessageManager().getMessage("notices.signs_teleported").sendTo(sender, new QuickMap<>("{SIGN}", Integer.toString(number)).put("{GAME}", game.getName()).build());
+        plugin.getMessageManager().getMessage("notices.signs_teleported").sendTo(sender, new QuickMap<>("{SIGN}", Integer.toString(number)).put("{HANDLER}", handler.getName()).build());
     }
 
     /*
@@ -352,8 +390,6 @@ public class CmdSign implements CommandExecutor {
 
         int page = CommandUtils.getPage(plugin, sender, args, 1);
         if (page == -1) return;
-
-        GgSignManager signManager = plugin.getSignManager();
 
         List<String> messages = new ArrayList<>();
         List<GSignType> types = getSignTypes();
@@ -370,8 +406,8 @@ public class CmdSign implements CommandExecutor {
             String shortName = type.getShortName();
             String rawName = ChatColor.RED + type.getClass().getCanonicalName();
             messages.add(TYPE_ELEMENT
-                    .replace("{NUM}", Integer.toString(index + 1))
-                    .replace("{NAME}", shortName != null ? (ChatColor.BLUE + shortName + " (" + rawName + ")") : (rawName))
+                .replace("{NUM}", Integer.toString(index + 1))
+                .replace("{NAME}", shortName != null ? (ChatColor.BLUE + shortName + " (" + rawName + ")") : (rawName))
             );
         }
 
@@ -381,6 +417,53 @@ public class CmdSign implements CommandExecutor {
             plugin.getMessageManager().getMessage("plugin.cmd_signs_types_none").sendTo(sender);
         } else {
             sender.sendMessage(messages.toArray(new String[messages.size()]));
+        }
+    }
+
+    /*
+     * Selects a sign provider.
+     */
+    private void cmdUse(CommandSender sender, String label, String[] args) {
+        if (!CommandUtils.performBasicChecks(plugin, sender, PermissionNode.SIGNS_CREATE, true)) return;
+        if (!CommandUtils.performArgsCheck(plugin, sender, label, args.length, 2, plugin.getMessageManager().getMessage("usages.signs_use"))) return;
+
+        String name = args[1];
+        SignHandler signHandler = plugin.getSignManager().getSignHandlerByName(name);
+        if (signHandler == null) {
+            if (!name.equals("none")) {
+                plugin.getMessageManager().getMessage("errors.signs_handler_not_found").sendTo(sender, new QuickMap<>("{NAME}", name).build());
+                return;
+            } else {
+                name = null;
+            }
+        }
+
+        GSignProvider provider = null;
+        if (signHandler != null) {
+            if (signHandler instanceof SingleSignHandler) {
+                provider = ((SingleSignHandler) signHandler).getProvider();
+            } else if (signHandler instanceof MultiSignHandler) {
+                if (args.length < 3 || args[2].equals("")) {
+                    plugin.getMessageManager().getMessage("usages.sign_use").sendTo(sender, new QuickMap<>("{LABEL}", label).build());
+                    return;
+                }
+
+                provider = ((MultiSignHandler) signHandler).getProvider(args[2]);
+            }
+        }
+
+        if (provider == null && name != null) {
+            plugin.getMessageManager().getMessage("errors.signs_provider_not_found").sendTo(sender, new QuickMap<String, String>()
+                .put("{NAME}", name)
+                .build()
+            );
+            return;
+        }
+
+        if (!plugin.getSignManager().setPlayerProvider(((Player) sender).getUniqueId(), provider)) {
+            plugin.getMessageManager().getMessage("errors.signs_provider_already_set").sendTo(sender);
+        } else {
+            plugin.getMessageManager().getMessage("notices.signs_provider_set").sendTo(sender);
         }
     }
 

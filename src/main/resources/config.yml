@@ -15,8 +15,8 @@ Signs:
   Interact delay: 20
   Enable InSigns: true
   Formats:
-    Game not found:
+    Provider not found:
     - '&a&l\u300AGamegine\u300B'
-    - '&4&oGAME NOT FOUND'
+    - '&4&oNOT FOUND'
     - ''
-    - '&c{GAME}'
+    - '&c{PROVIDER}'

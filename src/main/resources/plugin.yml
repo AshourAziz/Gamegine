@@ -9,11 +9,11 @@ main: ${project.mainClass}
 commands:
   gamegine:
     aliases: [gg]
-  gameginegames:
+  gameginegame:
     aliases: [games, game, ggames, ggame]
   gamegineselection:
-    aliases: [ggsel, gsel, sel, selection]
-  gameginesigns:
+    aliases: [selection, gsel, sel]
+  gameginesign:
     aliases: [signs, sign, gsigns, gsign]
 permissions:
   #####################
@@ -39,6 +39,7 @@ permissions:
     default: false
     children:
       gamegine.signs.create: true
+      gamegine.signs.handlers: true
       gamegine.signs.info: true
       gamegine.signs.list: true
       gamegine.signs.teleport: true
@@ -92,6 +93,9 @@ permissions:
   #################
   gamegine.signs.create:
     description: 'Allows a player to create a Gamegine sign.'
+    default: false
+  gamegine.signs.handlers:
+    description: 'Allows one to view all registered sign handlers.'
     default: false
   gamegine.signs.info:
     description: 'Allows a player to view a Gamegine sign''s info.'

@@ -33,6 +33,7 @@ public enum PermissionNode {
 
     SIGNS_CREATE,
     SIGNS_DELETE,
+    SIGNS_HANDLERS,
     SIGNS_INFO,
     SIGNS_LIST,
     SIGNS_TELEPORT,

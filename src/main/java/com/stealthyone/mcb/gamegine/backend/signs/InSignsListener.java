@@ -20,8 +20,8 @@ package com.stealthyone.mcb.gamegine.backend.signs;
 
 import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.signs.ActiveGSign;
+import com.stealthyone.mcb.gamegine.api.signs.handler.GSignProvider;
 import com.stealthyone.mcb.gamegine.api.signs.variables.SignVariable;
-import com.stealthyone.mcb.gamegine.lib.games.instances.GameInstance;
 import com.stealthyone.mcb.gamegine.utils.BlockLocation;
 import de.blablubbabc.insigns.SignSendEvent;
 import lombok.RequiredArgsConstructor;
@@ -56,27 +56,28 @@ public class InSignsListener implements Listener {
     private List<String> getLines(ActiveGSign sign, Player p) {
         List<String> newLines;
 
-        GameInstance gameInstance;
+        GSignProvider provider;
         try {
-            gameInstance = sign.getGame();
+            provider = sign.getProvider();
             newLines = new ArrayList<>(sign.getType().getLines(sign));
         } catch (IllegalStateException ex) {
-            // Game not loaded.
+            // Provider not found.
             newLines = new ArrayList<>();
 
-            String[] gameClassSplit = sign.getGameInstanceRef().split(":")[0].split("\\.");
-            String gameName = gameClassSplit[gameClassSplit.length - 1];
+            String[] providerRefSplit = sign.getProviderReference().getHandlerIdentifier().split(":")[0].split("\\.");
+            String providerName = providerRefSplit[providerRefSplit.length - 1];
 
             for (int i = 0; i < 4; i++) {
-                newLines.set(i, ChatColor.translateAlternateColorCodes('&', plugin.getSignManager().gameNotFoundFormat.get(i).replace("{GAME}", gameName)));
+                newLines.set(i, ChatColor.translateAlternateColorCodes('&', plugin.getSignManager().signInvalidProviderFormat.get(i).replace("{PROVIDER}", providerName)));
             }
+
             return newLines;
         }
 
-        if (gameInstance != null && sign.getType().useSignVariables()) {
+        if (provider != null && sign.getType().useSignVariables()) {
             for (SignVariable var : plugin.getSignManager().registeredVariables.values()) {
                 String varName = var.getClass().getCanonicalName();
-                String replacement = var.getReplacement(gameInstance);
+                String replacement = var.getReplacement(provider, p);
 
                 for (int i = 0; i < 4; i++) {
                     String string = newLines.get(i);

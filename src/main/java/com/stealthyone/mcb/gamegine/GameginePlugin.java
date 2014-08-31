@@ -30,11 +30,12 @@ import com.stealthyone.mcb.gamegine.backend.hooks.GgHookManager;
 import com.stealthyone.mcb.gamegine.backend.selections.GgSelectionManager;
 import com.stealthyone.mcb.gamegine.backend.signs.GgSignManager;
 import com.stealthyone.mcb.gamegine.backend.signs.SignListener;
+import com.stealthyone.mcb.gamegine.commands.CmdGame;
 import com.stealthyone.mcb.gamegine.commands.CmdGamegine;
-import com.stealthyone.mcb.gamegine.commands.CmdGames;
 import com.stealthyone.mcb.gamegine.commands.CmdSelection;
 import com.stealthyone.mcb.gamegine.commands.CmdSelectionCompleter;
 import com.stealthyone.mcb.gamegine.commands.CmdSign;
+import com.stealthyone.mcb.gamegine.commands.CmdSignCompleter;
 import com.stealthyone.mcb.gamegine.listeners.PlayerListener;
 import com.stealthyone.mcb.gamegine.players.GgPlayerManager;
 import com.stealthyone.mcb.gamegine.utils.BlockLocation;
@@ -69,7 +70,7 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
     private GgSignManager signManager;
 
     /* Commands */
-    @Getter private CmdGames cmdGames = new CmdGames(this);
+    @Getter private CmdGame cmdGame = new CmdGame(this);
 
     @Override
     public void onLoad() {
@@ -119,10 +120,11 @@ public class GameginePlugin extends JavaPlugin implements GamegineAPI {
 
         GamegineLogger.debug("Registering commands...");
         getCommand("gamegine").setExecutor(new CmdGamegine(this));
-        getCommand("gameginegames").setExecutor(cmdGames);
+        getCommand("gameginegame").setExecutor(cmdGame);
         getCommand("gamegineselection").setExecutor(new CmdSelection(this));
         getCommand("gamegineselection").setTabCompleter(new CmdSelectionCompleter(this));
-        getCommand("gameginesigns").setExecutor(new CmdSign(this));
+        getCommand("gameginesign").setExecutor(new CmdSign(this));
+        getCommand("gameginesign").setTabCompleter(new CmdSignCompleter(this));
 
         GamegineLogger.info(String.format("Gamegine v%s by Stealth2800 successfully ENABLED.", getVersion()));
     }

@@ -43,7 +43,7 @@ import org.bukkit.entity.Player;
 import java.util.*;
 
 @RequiredArgsConstructor
-public class CmdGames implements CommandExecutor {
+public class CmdGame implements CommandExecutor {
 
     private final GameginePlugin plugin;
 

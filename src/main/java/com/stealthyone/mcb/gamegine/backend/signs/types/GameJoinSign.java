@@ -20,16 +20,21 @@ package com.stealthyone.mcb.gamegine.backend.signs.types;
 
 import com.stealthyone.mcb.gamegine.GameginePlugin;
 import com.stealthyone.mcb.gamegine.api.Gamegine;
+import com.stealthyone.mcb.gamegine.api.games.Game;
 import com.stealthyone.mcb.gamegine.api.games.modules.GameJoinModule;
 import com.stealthyone.mcb.gamegine.api.games.modules.GameJoinModule.GameJoinStatus;
 import com.stealthyone.mcb.gamegine.api.signs.ActiveGSign;
 import com.stealthyone.mcb.gamegine.api.signs.modules.GSignInteractModule;
-import com.stealthyone.mcb.gamegine.lib.games.instances.GameInstance;
+import com.stealthyone.mcb.gamegine.api.signs.variables.SignVariable.DefaultVariable;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.player.PlayerInteractEvent;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A game sign that allows players to join a game.
@@ -44,23 +49,23 @@ public class GameJoinSign extends GgYamlGSign implements GSignInteractModule {
 
     @Override
     public void playerInteract(PlayerInteractEvent e, ActiveGSign sign) {
-        GameInstance game = sign.getGame();
-        if (!(game.getOwner() instanceof GameJoinModule)) {
+        Game game = sign.getProvider().getHandler().getGame();
+        if (!(game instanceof GameJoinModule)) {
             ((GameginePlugin) Gamegine.getInstance()).getMessageManager().getMessage("errors.game_not_joinable").sendTo(e.getPlayer());
             return;
         }
 
         if (e.getPlayer().isSneaking()) {
-            ((GameginePlugin) Gamegine.getInstance()).getCmdGames().onCommand(e.getPlayer(), null, "games", new String[]{ "leave" });
+            ((GameginePlugin) Gamegine.getInstance()).getCmdGame().onCommand(e.getPlayer(), null, "games", new String[]{ "leave" });
         } else {
-            ((GameginePlugin) Gamegine.getInstance()).getCmdGames().onCommand(e.getPlayer(), null, "games", createArgs(sign, "join"));
+            ((GameginePlugin) Gamegine.getInstance()).getCmdGame().onCommand(e.getPlayer(), null, "games", createArgs(sign, "join"));
         }
     }
 
     private String[] createArgs(ActiveGSign sign, String firstArg) {
         List<String> args = new ArrayList<>();
         args.add(firstArg);
-        args.add(sign.getGameInstanceRef());
+        args.add(sign.getProvider().getValue(DefaultVariable.GAME_REFERENCE));
         Object obj = sign.getExtraData().get("args");
         if (obj != null) {
             if (obj instanceof String) {
@@ -78,7 +83,7 @@ public class GameJoinSign extends GgYamlGSign implements GSignInteractModule {
     public List<String> getLines(ActiveGSign sign) {
         List<String> list = new ArrayList<>(super.getLines(sign));
 
-        GameInstance game = sign.getGame();
+        Game game = sign.getProvider().getHandler().getGame();
         if (!(game instanceof GameJoinModule)) {
             list.add("" + ChatColor.DARK_RED + ChatColor.BOLD + "NOT JOINABLE");
         } else {
